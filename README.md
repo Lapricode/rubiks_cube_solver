@@ -2,14 +2,15 @@
 
 Rubik's cube solver.
 
-The program creates a virtual cube. You can scramble the cube or draw a pattern
-from a real cube and the computer will give you the solving moves. There are
-three ways of automatic solve implemented in the program: the beginner method,
-with code written by me, the CFOP method and the Kociemba method (which is the
-fastest in terms of number of moves), with the last two methods being carried
-out by the python library `rubik_solver`. You can also try to solve the virtual
-cube alone as fast as you can. The moves can be done on the virtual cube using
-keyboard or mouse, depending on your convenience.
+The program creates a virtual cube. You can choose between a 2x2x2 and a 3x3x3
+cube from the menu, scramble the cube or draw a pattern from a real cube, and
+the computer will give you the solving moves. The 2x2 cube uses an optimal
+solver. For the 3x3 cube there are three automatic solving methods: the beginner
+method, with code written by me, the CFOP method and the Kociemba method (which
+is the fastest in terms of number of moves), with the last two methods being
+carried out by the python library `rubik_solver`. You can also try to solve the
+virtual cube alone as fast as you can. The moves can be done on the virtual cube
+using keyboard or mouse, depending on your convenience.
 
 Try it if you want.
 
@@ -56,6 +57,7 @@ black --check .
 - `rubiks_cube.py` — application entry point.
 - `rubik/cube.py` — pure cube state, validation and move logic.
 - `rubik/solvers.py` — beginner solver and lazy CFOP/Kociemba integration.
+- `rubik/solver_2x2.py` — optimal 2x2 solver using corner pattern databases.
 - `rubik/config.py` — constants, face enum, asset paths and key bindings.
 - `rubik/texts.py` — user-facing text.
 - `rubik/ui/` — Tkinter application, menus, rendering, widgets and animation/replay controllers.

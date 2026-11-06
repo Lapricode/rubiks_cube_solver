@@ -17,6 +17,7 @@ from .cube import (
     apply_move,
     apply_moves,
     copy_cube,
+    cube_size,
     face_centres,
     get_colors_rubik_solver_library,
     improve_moves_sequence,
@@ -769,6 +770,8 @@ def solve_beginner(cube: Cube, initial_solved_color: str) -> tuple[list[list[str
     ``stages`` is a list of six move lists, one per solving stage.
     """
     validate_cube(cube)
+    if cube_size(cube) != 3:
+        raise SolverFailedError("The beginner solver only supports 3x3 cubes.")
     rubiks_cube2 = copy_cube(cube)
     final_solved_color = ["b", "r", "y", "g", "o", "w"][
         (["b", "r", "y", "g", "o", "w"].index(initial_solved_color) + 3) % 6
@@ -828,6 +831,8 @@ def solve_external(cube: Cube, method: str) -> tuple[list[str], list[str] | None
     list of four stages for CFOP and ``None`` for Kociemba.
     """
     validate_cube(cube)
+    if cube_size(cube) != 3:
+        raise SolverFailedError("CFOP and Kociemba only support 3x3 cubes.")
     _ensure_past_compatibility()
 
     try:

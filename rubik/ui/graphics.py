@@ -51,246 +51,68 @@ class CubeGraphicsMixin:
         cube_face_down_left_point: Sequence[float],
     ) -> None:
         cf = cube_face_oriented
+        size = len(cf)
         cfdl = cube_face_down_left_point
         ps1 = piece_left_side_length
         ps2 = piece_down_side_length
         pa1 = math.radians(piece_left_side_angle)
         pa2 = math.radians(piece_down_side_angle)
+        color_names = self.cube_colors + ["cyan"]
         cf_colors = [
-            [
-                (self.cube_colors + ["cyan"])[["b", "y", "o", "w", "r", "g", "c"].index(cf[i][j])]
-                for j in range(3)
-            ]
-            for i in range(3)
+            [color_names[["b", "y", "o", "w", "r", "g", "c"].index(cf[i][j])] for j in range(size)]
+            for i in range(size)
         ]
-        cfdl2 = cfdl
-        background.create_polygon(
-            [
-                cfdl2[0],
-                cfdl2[1],
-                cfdl2[0] + ps2 * math.cos(pa2),
-                cfdl2[1] - ps2 * math.sin(pa2),
-                cfdl2[0] + ps2 * math.cos(pa2) + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1) - ps2 * math.sin(pa2),
-                cfdl2[0] + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1),
-            ],
-            fill=cf_colors[2][0],
-            activefill=self.highlight_cube_piece(cf_colors[2][0]),
-            width=borders_width,
-            outline="black",
-            tags=f"down_left_piece_{cube_side_info}",
-        )
-        cfdl2 = [cfdl[0] + ps2 * math.cos(pa2), cfdl[1] - ps2 * math.sin(pa2)]
-        background.create_polygon(
-            [
-                cfdl2[0],
-                cfdl2[1],
-                cfdl2[0] + ps2 * math.cos(pa2),
-                cfdl2[1] - ps2 * math.sin(pa2),
-                cfdl2[0] + ps2 * math.cos(pa2) + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1) - ps2 * math.sin(pa2),
-                cfdl2[0] + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1),
-            ],
-            fill=cf_colors[2][1],
-            activefill=self.highlight_cube_piece(cf_colors[2][1]),
-            width=borders_width,
-            outline="black",
-            tags=f"down_middle_piece_{cube_side_info}",
-        )
-        cfdl2 = [cfdl[0] + 2 * ps2 * math.cos(pa2), cfdl[1] - 2 * ps2 * math.sin(pa2)]
-        background.create_polygon(
-            [
-                cfdl2[0],
-                cfdl2[1],
-                cfdl2[0] + ps2 * math.cos(pa2),
-                cfdl2[1] - ps2 * math.sin(pa2),
-                cfdl2[0] + ps2 * math.cos(pa2) + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1) - ps2 * math.sin(pa2),
-                cfdl2[0] + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1),
-            ],
-            fill=cf_colors[2][2],
-            activefill=self.highlight_cube_piece(cf_colors[2][2]),
-            width=borders_width,
-            outline="black",
-            tags=f"down_right_piece_{cube_side_info}",
-        )
-        cfdl2 = [cfdl[0] + ps1 * math.cos(pa1), cfdl[1] - ps1 * math.sin(pa1)]
-        background.create_polygon(
-            [
-                cfdl2[0],
-                cfdl2[1],
-                cfdl2[0] + ps2 * math.cos(pa2),
-                cfdl2[1] - ps2 * math.sin(pa2),
-                cfdl2[0] + ps2 * math.cos(pa2) + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1) - ps2 * math.sin(pa2),
-                cfdl2[0] + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1),
-            ],
-            fill=cf_colors[1][0],
-            activefill=self.highlight_cube_piece(cf_colors[1][0]),
-            width=borders_width,
-            outline="black",
-            tags=f"left_middle_piece_{cube_side_info}",
-        )
-        cfdl2 = [
-            cfdl[0] + ps1 * math.cos(pa1) + ps2 * math.cos(pa2),
-            cfdl[1] - ps1 * math.sin(pa1) - ps2 * math.sin(pa2),
-        ]
-        background.create_polygon(
-            [
-                cfdl2[0],
-                cfdl2[1],
-                cfdl2[0] + ps2 * math.cos(pa2),
-                cfdl2[1] - ps2 * math.sin(pa2),
-                cfdl2[0] + ps2 * math.cos(pa2) + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1) - ps2 * math.sin(pa2),
-                cfdl2[0] + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1),
-            ],
-            fill=cf_colors[1][1],
-            activefill=self.highlight_cube_piece(cf_colors[1][1]),
-            width=borders_width,
-            outline="black",
-            tags=f"centre_piece_{cube_side_info}",
-        )
-        cfdl2 = [
-            cfdl[0] + ps1 * math.cos(pa1) + 2 * ps2 * math.cos(pa2),
-            cfdl[1] - ps1 * math.sin(pa1) - 2 * ps2 * math.sin(pa2),
-        ]
-        background.create_polygon(
-            [
-                cfdl2[0],
-                cfdl2[1],
-                cfdl2[0] + ps2 * math.cos(pa2),
-                cfdl2[1] - ps2 * math.sin(pa2),
-                cfdl2[0] + ps2 * math.cos(pa2) + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1) - ps2 * math.sin(pa2),
-                cfdl2[0] + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1),
-            ],
-            fill=cf_colors[1][2],
-            activefill=self.highlight_cube_piece(cf_colors[1][2]),
-            width=borders_width,
-            outline="black",
-            tags=f"right_middle_piece_{cube_side_info}",
-        )
-        cfdl2 = [cfdl[0] + 2 * ps1 * math.cos(pa1), cfdl[1] - 2 * ps1 * math.sin(pa1)]
-        background.create_polygon(
-            [
-                cfdl2[0],
-                cfdl2[1],
-                cfdl2[0] + ps2 * math.cos(pa2),
-                cfdl2[1] - ps2 * math.sin(pa2),
-                cfdl2[0] + ps2 * math.cos(pa2) + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1) - ps2 * math.sin(pa2),
-                cfdl2[0] + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1),
-            ],
-            fill=cf_colors[0][0],
-            activefill=self.highlight_cube_piece(cf_colors[0][0]),
-            width=borders_width,
-            outline="black",
-            tags=f"up_left_piece_{cube_side_info}",
-        )
-        cfdl2 = [
-            cfdl[0] + 2 * ps1 * math.cos(pa1) + ps2 * math.cos(pa2),
-            cfdl[1] - 2 * ps1 * math.sin(pa1) - ps2 * math.sin(pa2),
-        ]
-        background.create_polygon(
-            [
-                cfdl2[0],
-                cfdl2[1],
-                cfdl2[0] + ps2 * math.cos(pa2),
-                cfdl2[1] - ps2 * math.sin(pa2),
-                cfdl2[0] + ps2 * math.cos(pa2) + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1) - ps2 * math.sin(pa2),
-                cfdl2[0] + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1),
-            ],
-            fill=cf_colors[0][1],
-            activefill=self.highlight_cube_piece(cf_colors[0][1]),
-            width=borders_width,
-            outline="black",
-            tags=f"up_middle_piece_{cube_side_info}",
-        )
-        cfdl2 = [
-            cfdl[0] + 2 * ps1 * math.cos(pa1) + 2 * ps2 * math.cos(pa2),
-            cfdl[1] - 2 * ps1 * math.sin(pa1) - 2 * ps2 * math.sin(pa2),
-        ]
-        background.create_polygon(
-            [
-                cfdl2[0],
-                cfdl2[1],
-                cfdl2[0] + ps2 * math.cos(pa2),
-                cfdl2[1] - ps2 * math.sin(pa2),
-                cfdl2[0] + ps2 * math.cos(pa2) + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1) - ps2 * math.sin(pa2),
-                cfdl2[0] + ps1 * math.cos(pa1),
-                cfdl2[1] - ps1 * math.sin(pa1),
-            ],
-            fill=cf_colors[0][2],
-            activefill=self.highlight_cube_piece(cf_colors[0][2]),
-            width=borders_width,
-            outline="black",
-            tags=f"up_right_piece_{cube_side_info}",
-        )
+        left_x = ps1 * math.cos(pa1)
+        left_y = -ps1 * math.sin(pa1)
+        down_x = ps2 * math.cos(pa2)
+        down_y = -ps2 * math.sin(pa2)
 
-        for piece_name in (
-            "down_left",
-            "down_middle",
-            "down_right",
-            "left_middle",
-            "centre",
-            "right_middle",
-            "up_left",
-            "up_middle",
-            "up_right",
-        ):
-            background.tag_unbind(f"{piece_name}_piece_{cube_side_info}", "<Button-1>")
+        for row in range(size):
+            row_offset = size - 1 - row
+            for column in range(size):
+                x = cfdl[0] + row_offset * left_x + column * down_x
+                y = cfdl[1] + row_offset * left_y + column * down_y
+                color = cf_colors[row][column]
+                background.create_polygon(
+                    [
+                        x,
+                        y,
+                        x + down_x,
+                        y + down_y,
+                        x + down_x + left_x,
+                        y + down_y + left_y,
+                        x + left_x,
+                        y + left_y,
+                    ],
+                    fill=color,
+                    activefill=self.highlight_cube_piece(color),
+                    width=borders_width,
+                    outline="black",
+                    tags=f"piece_{row}_{column}_{cube_side_info}",
+                )
 
-        if tags_are_binded and self.game_state == "draw_scramble":
-            piece_positions = {
-                "down_left": "20",
-                "down_middle": "21",
-                "down_right": "22",
-                "left_middle": "10",
-                "centre": "11",
-                "right_middle": "12",
-                "up_left": "00",
-                "up_middle": "01",
-                "up_right": "02",
-            }
-            for piece_name, position in piece_positions.items():
-                background.tag_bind(
-                    f"{piece_name}_piece_{cube_side_info}",
-                    "<Button-1>",
-                    lambda event, p=position: self.draw_scramble_piece_pressed(
-                        background, f"{cube_side_info}{p}", event
-                    ),
-                )
-        elif tags_are_binded:
-            piece_positions = {
-                "down_left": "20",
-                "down_middle": "21",
-                "down_right": "22",
-                "left_middle": "10",
-                "centre": "11",
-                "right_middle": "12",
-                "up_left": "00",
-                "up_middle": "01",
-                "up_right": "02",
-            }
-            for piece_name, position in piece_positions.items():
-                background.tag_bind(
-                    f"{piece_name}_piece_{cube_side_info}",
-                    "<Button-1>",
-                    lambda event, p=position: self.cube_moves_mouse_events(
-                        f"{cube_side_info}{p}", event
-                    ),
-                )
+        if not tags_are_binded:
+            return
+        for row in range(size):
+            for column in range(size):
+                tag = f"piece_{row}_{column}_{cube_side_info}"
+                position = f"{row}{column}"
+                if self.game_state == "draw_scramble":
+                    background.tag_bind(
+                        tag,
+                        "<Button-1>",
+                        lambda event, side=cube_side_info, p=position, bg=background: (
+                            self.draw_scramble_piece_pressed(bg, f"{side}{p}", event)
+                        ),
+                    )
+                else:
+                    background.tag_bind(
+                        tag,
+                        "<Button-1>",
+                        lambda event, side=cube_side_info, p=position: self.cube_moves_mouse_events(
+                            f"{side}{p}", event
+                        ),
+                    )
 
     def draw_scramble_piece_pressed(
         self, background: tk.Canvas, cube_side_info: str, event: tk.Event
@@ -309,7 +131,7 @@ class CubeGraphicsMixin:
         )
         if piece_loc_0 == 4 and self.cube_dimensions == "3d":
             piece_loc_1_copy = piece_loc_1
-            piece_loc_1 = 2 - piece_loc_2
+            piece_loc_1 = self.cube_size - 1 - piece_loc_2
             piece_loc_2 = piece_loc_1_copy
         self.rubiks_cube[piece_loc_0][piece_loc_1][piece_loc_2] = self.chosen_draw_color[0]
         self.draw_scrambled_rubiks_cube = copy_cube(self.rubiks_cube)
@@ -324,6 +146,7 @@ class CubeGraphicsMixin:
         return self.chosen_draw_color
 
     def make_cube_graphics(self, main_cube: Cube, move: Move | None) -> None:
+        n = self.cube_size
         if self.game_state in ["moves_scramble", "self_solve"] or (
             self.game_state == "auto_solve"
             and self.previous_game_state in ["moves_scramble", "self_solve"]
@@ -340,7 +163,7 @@ class CubeGraphicsMixin:
         )
         if self.cube_dimensions == "3d":
             # For visible_cube.
-            centre_offset = 3 / 2 * self.sides_distortion * self.piece_side_length / math.sqrt(2)
+            centre_offset = n / 2 * self.sides_distortion * self.piece_side_length / math.sqrt(2)
             self.front_cube_side_centre = [
                 self.visible_cube_centre_x - centre_offset,
                 self.visible_cube_centre_y + centre_offset,
@@ -356,8 +179,8 @@ class CubeGraphicsMixin:
                 90,
                 0,
                 [
-                    self.front_cube_side_centre[0] - 3 * self.piece_side_length / 2,
-                    self.front_cube_side_centre[1] + 3 * self.piece_side_length / 2,
+                    self.front_cube_side_centre[0] - n * self.piece_side_length / 2,
+                    self.front_cube_side_centre[1] + n * self.piece_side_length / 2,
                 ],
             )
             self.draw_cube_side(
@@ -371,35 +194,35 @@ class CubeGraphicsMixin:
                 45,
                 0,
                 [
-                    self.front_cube_side_centre[0] - 3 * self.piece_side_length / 2,
-                    self.front_cube_side_centre[1] - 3 * self.piece_side_length / 2,
+                    self.front_cube_side_centre[0] - n * self.piece_side_length / 2,
+                    self.front_cube_side_centre[1] - n * self.piece_side_length / 2,
                 ],
             )
             self.draw_cube_side(
                 self.cube_background,
                 True,
                 "4",
-                [[rubiks_cube_view[Face.RIGHT][2 - j][i] for j in range(3)] for i in range(3)],
+                [[rubiks_cube_view[Face.RIGHT][n - 1 - j][i] for j in range(n)] for i in range(n)],
                 5 * self.borders_width,
                 self.piece_side_length,
                 self.piece_side_length * self.sides_distortion,
                 90,
                 45,
                 [
-                    self.front_cube_side_centre[0] + 3 * self.piece_side_length / 2,
-                    self.front_cube_side_centre[1] + 3 * self.piece_side_length / 2,
+                    self.front_cube_side_centre[0] + n * self.piece_side_length / 2,
+                    self.front_cube_side_centre[1] + n * self.piece_side_length / 2,
                 ],
             )
             if self.axis_visibility == "on":
                 self.cube_background.create_line(
                     self.front_cube_side_centre[0]
-                    - 3 * self.piece_side_length * (1 / 2 - self.sides_distortion / math.sqrt(2)),
+                    - n * self.piece_side_length * (1 / 2 - self.sides_distortion / math.sqrt(2)),
                     self.front_cube_side_centre[1]
-                    - 3 * self.piece_side_length * (1 / 2 + self.sides_distortion / math.sqrt(2)),
+                    - n * self.piece_side_length * (1 / 2 + self.sides_distortion / math.sqrt(2)),
                     self.front_cube_side_centre[0]
-                    - 3 * self.piece_side_length * (1 / 2 - self.sides_distortion / math.sqrt(2)),
+                    - n * self.piece_side_length * (1 / 2 - self.sides_distortion / math.sqrt(2)),
                     self.front_cube_side_centre[1]
-                    - 3 * self.piece_side_length * (1 / 2 + self.sides_distortion / math.sqrt(2))
+                    - n * self.piece_side_length * (1 / 2 + self.sides_distortion / math.sqrt(2))
                     - 50,
                     width=5,
                     fill="black",
@@ -407,10 +230,10 @@ class CubeGraphicsMixin:
                 )
                 self.cube_background.create_text(
                     self.front_cube_side_centre[0]
-                    - 3 * self.piece_side_length * (1 / 2 - self.sides_distortion / math.sqrt(2))
+                    - n * self.piece_side_length * (1 / 2 - self.sides_distortion / math.sqrt(2))
                     - 10,
                     self.front_cube_side_centre[1]
-                    - 3 * self.piece_side_length * (1 / 2 + self.sides_distortion / math.sqrt(2))
+                    - n * self.piece_side_length * (1 / 2 + self.sides_distortion / math.sqrt(2))
                     - 50,
                     text="z",
                     font="Times 20 bold",
@@ -419,24 +242,24 @@ class CubeGraphicsMixin:
                 )
                 self.cube_background.create_line(
                     self.front_cube_side_centre[0]
-                    + 3 * self.piece_side_length * (1 / 2 + self.sides_distortion / math.sqrt(2)),
+                    + n * self.piece_side_length * (1 / 2 + self.sides_distortion / math.sqrt(2)),
                     self.front_cube_side_centre[1]
-                    + 3 * self.piece_side_length * (1 / 2 - self.sides_distortion / math.sqrt(2)),
+                    + n * self.piece_side_length * (1 / 2 - self.sides_distortion / math.sqrt(2)),
                     self.front_cube_side_centre[0]
-                    + 3 * self.piece_side_length * (1 / 2 + self.sides_distortion / math.sqrt(2))
+                    + n * self.piece_side_length * (1 / 2 + self.sides_distortion / math.sqrt(2))
                     + 50,
                     self.front_cube_side_centre[1]
-                    + 3 * self.piece_side_length * (1 / 2 - self.sides_distortion / math.sqrt(2)),
+                    + n * self.piece_side_length * (1 / 2 - self.sides_distortion / math.sqrt(2)),
                     width=5,
                     fill="black",
                     activefill="white",
                 )
                 self.cube_background.create_text(
                     self.front_cube_side_centre[0]
-                    + 3 * self.piece_side_length * (1 / 2 + self.sides_distortion / math.sqrt(2))
+                    + n * self.piece_side_length * (1 / 2 + self.sides_distortion / math.sqrt(2))
                     + 60,
                     self.front_cube_side_centre[1]
-                    + 3 * self.piece_side_length * (1 / 2 - self.sides_distortion / math.sqrt(2))
+                    + n * self.piece_side_length * (1 / 2 - self.sides_distortion / math.sqrt(2))
                     - 5,
                     text="y",
                     font="Times 20 bold",
@@ -444,13 +267,13 @@ class CubeGraphicsMixin:
                     activefill="purple",
                 )
                 self.cube_background.create_line(
-                    self.front_cube_side_centre[0] - 3 * self.piece_side_length / 2,
-                    self.front_cube_side_centre[1] + 3 * self.piece_side_length / 2,
+                    self.front_cube_side_centre[0] - n * self.piece_side_length / 2,
+                    self.front_cube_side_centre[1] + n * self.piece_side_length / 2,
                     self.front_cube_side_centre[0]
-                    - 3 * self.piece_side_length / 2
+                    - n * self.piece_side_length / 2
                     - 50 / math.sqrt(2),
                     self.front_cube_side_centre[1]
-                    + 3 * self.piece_side_length / 2
+                    + n * self.piece_side_length / 2
                     + 50 / math.sqrt(2),
                     width=5,
                     fill="black",
@@ -458,10 +281,10 @@ class CubeGraphicsMixin:
                 )
                 self.cube_background.create_text(
                     self.front_cube_side_centre[0]
-                    - 3 * self.piece_side_length / 2
+                    - n * self.piece_side_length / 2
                     - 50 / math.sqrt(2),
                     self.front_cube_side_centre[1]
-                    + 3 * self.piece_side_length / 2
+                    + n * self.piece_side_length / 2
                     + 50 / math.sqrt(2)
                     + 10,
                     text="x",
@@ -475,7 +298,10 @@ class CubeGraphicsMixin:
                     self.cube_background,
                     False,
                     "None",
-                    [[rubiks_cube_view[Face.BACK][2 - i][j] for j in range(3)] for i in range(3)],
+                    [
+                        [rubiks_cube_view[Face.BACK][n - 1 - i][j] for j in range(n)]
+                        for i in range(n)
+                    ],
                     0,
                     self.hidden_side_length,
                     self.hidden_side_length,
@@ -487,7 +313,10 @@ class CubeGraphicsMixin:
                     self.cube_background,
                     False,
                     "None",
-                    [[rubiks_cube_view[Face.DOWN][i][2 - j] for j in range(3)] for i in range(3)],
+                    [
+                        [rubiks_cube_view[Face.DOWN][i][n - 1 - j] for j in range(n)]
+                        for i in range(n)
+                    ],
                     0,
                     self.hidden_side_length * self.sides_distortion,
                     self.hidden_side_length,
@@ -495,9 +324,9 @@ class CubeGraphicsMixin:
                     0,
                     [
                         self.hidden_cube_centre_x
-                        - 3 * self.hidden_side_length * self.sides_distortion / math.sqrt(2),
+                        - n * self.hidden_side_length * self.sides_distortion / math.sqrt(2),
                         self.hidden_cube_centre_y
-                        + 3 * self.hidden_side_length * self.sides_distortion / math.sqrt(2),
+                        + n * self.hidden_side_length * self.sides_distortion / math.sqrt(2),
                     ],
                 )
                 self.draw_cube_side(
@@ -505,8 +334,8 @@ class CubeGraphicsMixin:
                     False,
                     "None",
                     [
-                        [rubiks_cube_view[Face.LEFT][2 - j][2 - i] for j in range(3)]
-                        for i in range(3)
+                        [rubiks_cube_view[Face.LEFT][n - 1 - j][n - 1 - i] for j in range(n)]
+                        for i in range(n)
                     ],
                     0,
                     self.hidden_side_length,
@@ -515,9 +344,9 @@ class CubeGraphicsMixin:
                     45,
                     [
                         self.hidden_cube_centre_x
-                        - 3 * self.hidden_side_length * self.sides_distortion / math.sqrt(2),
+                        - n * self.hidden_side_length * self.sides_distortion / math.sqrt(2),
                         self.hidden_cube_centre_y
-                        + 3 * self.hidden_side_length * self.sides_distortion / math.sqrt(2),
+                        + n * self.hidden_side_length * self.sides_distortion / math.sqrt(2),
                     ],
                 )
             if self.hidden_sides_visibility == "on" and self.axis_visibility == "on":
@@ -525,14 +354,14 @@ class CubeGraphicsMixin:
                     self.hidden_cube_centre_x,
                     self.hidden_cube_centre_y,
                     self.hidden_cube_centre_x,
-                    self.hidden_cube_centre_y - 3 * self.hidden_side_length - 10,
+                    self.hidden_cube_centre_y - n * self.hidden_side_length - 10,
                     width=3,
                     fill="black",
                     activefill="white",
                 )
                 self.cube_background.create_text(
                     self.hidden_cube_centre_x - 10,
-                    self.hidden_cube_centre_y - 3 * self.hidden_side_length - 10,
+                    self.hidden_cube_centre_y - n * self.hidden_side_length - 10,
                     text="z",
                     font="Times 15 bold",
                     fill="black",
@@ -541,14 +370,14 @@ class CubeGraphicsMixin:
                 self.cube_background.create_line(
                     self.hidden_cube_centre_x,
                     self.hidden_cube_centre_y,
-                    self.hidden_cube_centre_x + 3 * self.hidden_side_length + 10,
+                    self.hidden_cube_centre_x + n * self.hidden_side_length + 10,
                     self.hidden_cube_centre_y,
                     width=3,
                     fill="black",
                     activefill="white",
                 )
                 self.cube_background.create_text(
-                    self.hidden_cube_centre_x + 3 * self.hidden_side_length + 20,
+                    self.hidden_cube_centre_x + n * self.hidden_side_length + 20,
                     self.hidden_cube_centre_y - 5,
                     text="y",
                     font="Times 15 bold",
@@ -559,18 +388,18 @@ class CubeGraphicsMixin:
                     self.hidden_cube_centre_x,
                     self.hidden_cube_centre_y,
                     self.hidden_cube_centre_x
-                    - (3 * self.hidden_side_length * self.sides_distortion + 10) / math.sqrt(2),
+                    - (n * self.hidden_side_length * self.sides_distortion + 10) / math.sqrt(2),
                     self.hidden_cube_centre_y
-                    + (3 * self.hidden_side_length * self.sides_distortion + 10) / math.sqrt(2),
+                    + (n * self.hidden_side_length * self.sides_distortion + 10) / math.sqrt(2),
                     width=3,
                     fill="black",
                     activefill="white",
                 )
                 self.cube_background.create_text(
                     self.hidden_cube_centre_x
-                    - (3 * self.hidden_side_length * self.sides_distortion + 10) / math.sqrt(2),
+                    - (n * self.hidden_side_length * self.sides_distortion + 10) / math.sqrt(2),
                     self.hidden_cube_centre_y
-                    + (3 * self.hidden_side_length * self.sides_distortion + 10) / math.sqrt(2)
+                    + (n * self.hidden_side_length * self.sides_distortion + 10) / math.sqrt(2)
                     + 10,
                     text="x",
                     font="Times 15 bold",
@@ -601,7 +430,7 @@ class CubeGraphicsMixin:
                 0,
                 [
                     self.visible_cube_centre_x,
-                    self.visible_cube_centre_y - 3 * self.piece_side_length / 2 - gap,
+                    self.visible_cube_centre_y - n * self.piece_side_length / 2 - gap,
                 ],
             )
             self.draw_cube_side(
@@ -615,8 +444,8 @@ class CubeGraphicsMixin:
                 90,
                 0,
                 [
-                    self.visible_cube_centre_x - 6 * self.piece_side_length - 2 * gap,
-                    self.visible_cube_centre_y + 3 * self.piece_side_length / 2,
+                    self.visible_cube_centre_x - 2 * n * self.piece_side_length - 2 * gap,
+                    self.visible_cube_centre_y + n * self.piece_side_length / 2,
                 ],
             )
             self.draw_cube_side(
@@ -630,8 +459,8 @@ class CubeGraphicsMixin:
                 90,
                 0,
                 [
-                    self.visible_cube_centre_x - 3 * self.piece_side_length - gap,
-                    self.visible_cube_centre_y + 3 * self.piece_side_length / 2,
+                    self.visible_cube_centre_x - n * self.piece_side_length - gap,
+                    self.visible_cube_centre_y + n * self.piece_side_length / 2,
                 ],
             )
             self.draw_cube_side(
@@ -646,7 +475,7 @@ class CubeGraphicsMixin:
                 0,
                 [
                     self.visible_cube_centre_x,
-                    self.visible_cube_centre_y + 3 * self.piece_side_length / 2,
+                    self.visible_cube_centre_y + n * self.piece_side_length / 2,
                 ],
             )
             self.draw_cube_side(
@@ -660,8 +489,8 @@ class CubeGraphicsMixin:
                 90,
                 0,
                 [
-                    self.visible_cube_centre_x + 3 * self.piece_side_length + gap,
-                    self.visible_cube_centre_y + 3 * self.piece_side_length / 2,
+                    self.visible_cube_centre_x + n * self.piece_side_length + gap,
+                    self.visible_cube_centre_y + n * self.piece_side_length / 2,
                 ],
             )
             self.draw_cube_side(
@@ -676,7 +505,7 @@ class CubeGraphicsMixin:
                 0,
                 [
                     self.visible_cube_centre_x,
-                    self.visible_cube_centre_y + 9 * self.piece_side_length / 2 + gap,
+                    self.visible_cube_centre_y + 3 * n * self.piece_side_length / 2 + gap,
                 ],
             )
         if self.scramble_pattern_visibility == "on":
@@ -693,7 +522,7 @@ class CubeGraphicsMixin:
                 0,
                 [
                     self.scrambled_pattern_centre_x,
-                    self.scrambled_pattern_centre_y - 3 * 15 / 2 - gap,
+                    self.scrambled_pattern_centre_y - n * 15 / 2 - gap,
                 ],
             )
             self.draw_cube_side(
@@ -707,8 +536,8 @@ class CubeGraphicsMixin:
                 90,
                 0,
                 [
-                    self.scrambled_pattern_centre_x - 6 * 15 - 2 * gap,
-                    self.scrambled_pattern_centre_y + 3 * 15 / 2,
+                    self.scrambled_pattern_centre_x - 2 * n * 15 - 2 * gap,
+                    self.scrambled_pattern_centre_y + n * 15 / 2,
                 ],
             )
             self.draw_cube_side(
@@ -722,8 +551,8 @@ class CubeGraphicsMixin:
                 90,
                 0,
                 [
-                    self.scrambled_pattern_centre_x - 3 * 15 - gap,
-                    self.scrambled_pattern_centre_y + 3 * 15 / 2,
+                    self.scrambled_pattern_centre_x - n * 15 - gap,
+                    self.scrambled_pattern_centre_y + n * 15 / 2,
                 ],
             )
             self.draw_cube_side(
@@ -736,7 +565,7 @@ class CubeGraphicsMixin:
                 15,
                 90,
                 0,
-                [self.scrambled_pattern_centre_x, self.scrambled_pattern_centre_y + 3 * 15 / 2],
+                [self.scrambled_pattern_centre_x, self.scrambled_pattern_centre_y + n * 15 / 2],
             )
             self.draw_cube_side(
                 self.cube_background,
@@ -749,8 +578,8 @@ class CubeGraphicsMixin:
                 90,
                 0,
                 [
-                    self.scrambled_pattern_centre_x + 3 * 15 + gap,
-                    self.scrambled_pattern_centre_y + 3 * 15 / 2,
+                    self.scrambled_pattern_centre_x + n * 15 + gap,
+                    self.scrambled_pattern_centre_y + n * 15 / 2,
                 ],
             )
             self.draw_cube_side(
@@ -765,7 +594,7 @@ class CubeGraphicsMixin:
                 0,
                 [
                     self.scrambled_pattern_centre_x,
-                    self.scrambled_pattern_centre_y + 9 * 15 / 2 + gap,
+                    self.scrambled_pattern_centre_y + 3 * n * 15 / 2 + gap,
                 ],
             )
         if move is not None:

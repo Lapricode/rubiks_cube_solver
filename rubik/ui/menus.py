@@ -63,6 +63,20 @@ class MenusMixin:
         )
         self.sound_button.pack(side=tk.LEFT)
 
+        cube_choice = self._add_menu_section(content, "Cube:", title_font, pad)
+        self.cube_size_button = self._add_menu_setting(
+            cube_choice,
+            0,
+            "size:",
+            self.cube_size_label(),
+            self.change_cube_size,
+            option_font,
+            button_font,
+            pad,
+        )
+
+        self._add_menu_separator(content, pad)
+
         cube_graphics = self._add_menu_section(content, "Cube graphics:", title_font, pad)
         self.borders_width_button = self._add_menu_setting(
             cube_graphics,
@@ -302,6 +316,18 @@ class MenusMixin:
         self.root.bind(
             "<Double-Key-0>", lambda event: self.show_previous_next_solve_move("end", event)
         )
+
+    def cube_size_label(self) -> str:
+        return f"{self.cube_size}x{self.cube_size}x{self.cube_size}"
+
+    def change_cube_size(self, event: tk.Event) -> None:
+        self.animation.cancel()
+        self._cancel_pending_graphics()
+        self.buttons_bindings_are_activated = True
+        self.cube_size = self.alternate_matrix_elements(self.cube_sizes_matrix, self.cube_size)
+        self.piece_side_length = 150 if self.cube_size == 2 else 100
+        self.cube_size_button.configure(text=self.cube_size_label())
+        self.reset_game()
 
     def change_game_settings_cube_graphics(self, event: tk.Event) -> None:
         if event.widget == self.scramble_moves_speed_button:

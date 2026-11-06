@@ -13,8 +13,9 @@ CUBE_NOTATION_TEXT = (
 )
 
 RESET_TEXT = (
-    "You may press the ⓘ (it appears at the upper left corner of the window) to understand how to read the 3x3 Rubik's cube\n"
-    "notation and how to enter the moves into the program in order to be executed. You can change the observation view of the\n"
+    "You may press the ⓘ (it appears at the upper left corner of the window) to understand how to read the Rubik's cube\n"
+    "notation and how to enter the moves into the program in order to be executed. Choose the cube size from the menu;\n"
+    "middle slice moves are only available on the 3x3 cube. You can change the observation view of the\n"
     "cube pressing the numbers 4, 6, 8, 2 and also reset it to default (top white side, front green side, right red side) pressing 5.\n"
     "Additionally, you can move the cube around inside the window and zoom-in or zoom-out using the mousewheel.\n"
     'Scramble the cube typing moves or pressing the "random scramble" button and then solve it yourself or let the computer\n'

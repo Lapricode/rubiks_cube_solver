@@ -102,3 +102,13 @@ def test_external_solver_rejects_invalid_solution(monkeypatch) -> None:
 
     with pytest.raises(SolverFailedError, match="invalid solution"):
         solve_external(solved_cube(), "Kociemba")
+
+
+def test_beginner_solver_rejects_2x2() -> None:
+    with pytest.raises(SolverFailedError, match="only supports 3x3"):
+        solve_beginner(solved_cube(2), "g")
+
+
+def test_external_solvers_reject_2x2() -> None:
+    with pytest.raises(SolverFailedError, match="only support 3x3"):
+        solve_external(solved_cube(2), "Kociemba")

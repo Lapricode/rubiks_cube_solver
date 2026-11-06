@@ -85,3 +85,32 @@ def test_cube_signature_changes_with_state() -> None:
 )
 def test_improve_moves_sequence(sequence: list[str], expected: list[str]) -> None:
     assert improve_moves_sequence(sequence) == expected
+
+
+def test_solved_2x2_cube() -> None:
+    cube = solved_cube(2)
+    validate_cube(cube)
+    assert is_solved(cube)
+    assert face_centres(cube) == ["b", "y", "o", "w", "r", "g"]
+    assert not is_solved(blank_cube("c", 2))
+
+
+def test_2x2_outer_moves_have_inverses() -> None:
+    for move in ["R", "L", "U", "D", "F", "B"]:
+        cube = apply_moves(solved_cube(2), [move, move, move, move])
+        assert is_solved(cube), move
+
+
+def test_2x2_rejects_middle_slice_moves() -> None:
+    with pytest.raises(ValueError, match="even-sized"):
+        apply_move(solved_cube(2), "M")
+    with pytest.raises(ValueError, match="even-sized"):
+        apply_move(solved_cube(2), "E")
+    with pytest.raises(ValueError, match="even-sized"):
+        apply_move(solved_cube(2), "S")
+
+
+def test_2x2_rotations_have_order_four() -> None:
+    for move in ["x", "y", "z"]:
+        cube = apply_moves(solved_cube(2), [move, move, move, move])
+        assert is_solved(cube), move

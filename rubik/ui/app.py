@@ -16,7 +16,9 @@ from ..config import (
     BORDERS_WIDTHS,
     COLOR_NAMES,
     CUBE_DIMENSIONS,
+    CUBE_SIZES,
     DEFAULT_BUTTONS_FONT,
+    DEFAULT_CUBE_SIZE,
     DEFAULT_MENUS_FONT,
     DEFAULT_OPTIONS_FONT,
     ICON_PATH,
@@ -38,6 +40,7 @@ from ..cube import (
     is_solved,
     solved_cube,
 )
+from ..solver_2x2 import solve_2x2
 from ..solvers import (
     SolverFailedError,
     SolverLibraryNotInstalledError,
@@ -134,9 +137,11 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
 
         # Variables for visible cube.
         self.cube_colors = COLOR_NAMES[:]
+        self.cube_size = DEFAULT_CUBE_SIZE
+        self.cube_sizes_matrix = CUBE_SIZES
         self.cube_dimensions = "3d"
         self.cube_dimensions_matrix = CUBE_DIMENSIONS
-        self.piece_side_length = 100
+        self.piece_side_length = 150 if self.cube_size == 2 else 100
         self.borders_width = 1
         self.borders_widths_matrix = BORDERS_WIDTHS
         self.sides_distortion = 0.6
@@ -311,9 +316,9 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
                 font="Arial 12 bold",
                 fill="brown",
             )
-            self.rubiks_cube = solved_cube()
+            self.rubiks_cube = solved_cube(self.cube_size)
             self.moves_scrambled_rubiks_cube = copy_cube(self.rubiks_cube)
-            self.draw_scrambled_rubiks_cube = blank_cube("c")
+            self.draw_scrambled_rubiks_cube = blank_cube("c", self.cube_size)
             self.random_scramble_moves_seq = []
             self.self_solve_moves_seq = []
             self.auto_solve_moves_seq = []
@@ -353,20 +358,15 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
                                 "F'",
                                 "B",
                                 "B'",
-                                "M",
-                                "M'",
-                                "E",
-                                "E'",
-                                "S",
-                                "S'",
                             ]
+                            + (["M", "M'", "E", "E'", "S", "S'"] if self.cube_size == 3 else [])
                         )
                     )
                     self.random_scramble_moves_seq = improve_moves_sequence(
                         self.random_scramble_moves_seq
                     )
             self.write_moves_scramble_text()
-            self.rubiks_cube = solved_cube()
+            self.rubiks_cube = solved_cube(self.cube_size)
             self.make_moves_sequence(self.rubiks_cube, [""] + self.random_scramble_moves_seq, True)
 
     def write_moves_scramble_text(self) -> None:
@@ -481,9 +481,9 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
 
     def clear_fill_cube_draw(self, event: tk.Event) -> None:
         if event.widget == self.clear_cube_draw_button:
-            self.draw_scrambled_rubiks_cube = blank_cube("c")
+            self.draw_scrambled_rubiks_cube = blank_cube("c", self.cube_size)
         elif event.widget == self.fill_cube_draw_button:
-            self.draw_scrambled_rubiks_cube = solved_cube()
+            self.draw_scrambled_rubiks_cube = solved_cube(self.cube_size)
         self.rubiks_cube = copy_cube(self.draw_scrambled_rubiks_cube)
         self.make_cube_graphics(self.rubiks_cube, None)
 
@@ -717,6 +717,22 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
                         font="Arial " + str(self.buttons_font) + " bold",
                         fill="brown",
                     )
+                    if self.cube_size == 2:
+                        self.down_area_background.create_text(
+                            self.down_area_background_width / 2,
+                            self.down_area_background_height / 2,
+                            text="2x2 optimal solver (short solution, no fixed centres needed)",
+                            font="Arial " + str(self.options_font) + " bold",
+                            fill="red",
+                            activefill="blue",
+                            tags="2x2",
+                        )
+                        self.down_area_background.tag_bind(
+                            "2x2",
+                            "<Button-1>",
+                            lambda event: self.auto_solve_cube("solve_cube", "2x2", None, event),
+                        )
+                        return
                     self.down_area_background.create_text(
                         self.down_area_background_width / 2,
                         self.down_area_background_height / 2 - 10,
@@ -805,7 +821,28 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
                     self.buttons_bindings_are_activated = False
                     self.moves_bindings_are_activated = False
                     self.moves_speed = self.solve_moves_speed
-                    if solve_method_choose == "Beginner":
+                    if self.cube_size == 2:
+                        self.down_area_background.delete("all")
+                        self.down_area_background.create_text(
+                            self.down_area_background_width / 2,
+                            self.down_area_background_height / 2,
+                            text="Solving...",
+                            font="Arial 18 bold",
+                            fill="brown",
+                        )
+                        self.root.update_idletasks()
+                        flat_moves, _stage_moves, _solved_cube_state = solve_2x2(self.rubiks_cube)
+                        self.down_area_background.delete("all")
+                        self.down_area_background.create_text(
+                            self.down_area_background_width / 2,
+                            self.down_area_background_height / 2,
+                            text=flat_moves,
+                            font="Arial 18 italic bold",
+                            fill="darkblue",
+                            width=max(100, self.down_area_background_width - 40),
+                        )
+                        self.auto_solve_moves_seq = flat_moves
+                    elif solve_method_choose == "Beginner":
                         stage_moves, _solved_cube_state = solve_beginner(
                             self.rubiks_cube, start_color_choose
                         )
@@ -1059,6 +1096,8 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
         event: tk.Event | None = None,
     ) -> Cube:
         move = moves_seq[0] if len(moves_seq) != 0 else ""
+        if self.cube_size == 2 and move and move[0] in "MES":
+            move = ""
         if (
             (event is None) or (event is not None and self.moves_bindings_are_activated)
         ) and move != "":
@@ -1214,60 +1253,52 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
         self.request_cube_graphics(self.rubiks_cube, None)
 
     def cube_moves_mouse_events(self, piece_info: str | None, event: tk.Event) -> None:
-        if self.cube_dimensions == "3d":
-            if event.type == tk.EventType.ButtonPress:
-                self.lastx2 = event.x
-                self.lasty2 = event.y
-                self.mouse_move_info = piece_info
-            elif event.type == tk.EventType.ButtonRelease and self.mouse_move_info is not None:
-                index1 = [True, False].index(
-                    abs(event.x - self.lastx2) >= abs(event.y - self.lasty2)
-                )
-                index2 = [True, False].index(event.x >= self.lastx2)
-                index3 = [True, False].index(event.y >= self.lasty2)
-                if int(self.mouse_move_info[0]) == 5:
-                    self.make_moves_sequence(
-                        self.rubiks_cube,
-                        [
-                            [[["U'"], ["U"]], [["E"], ["E'"]], [["D"], ["D'"]]][
-                                int(self.mouse_move_info[1])
-                            ][index2],
-                            [[["L"], ["L'"]], [["M"], ["M'"]], [["R'"], ["R"]]][
-                                int(self.mouse_move_info[2])
-                            ][index3],
-                        ][index1],
-                        True,
-                        event,
-                    )
-                elif int(self.mouse_move_info[0]) == 3:
-                    self.make_moves_sequence(
-                        self.rubiks_cube,
-                        [
-                            [[["B'"], ["B"]], [["S"], ["S'"]], [["F"], ["F'"]]][
-                                int(self.mouse_move_info[1])
-                            ][index2],
-                            [[["L"], ["L'"]], [["M"], ["M'"]], [["R'"], ["R"]]][
-                                int(self.mouse_move_info[2])
-                            ][index3],
-                        ][index1],
-                        True,
-                        event,
-                    )
-                elif int(self.mouse_move_info[0]) == 4:
-                    self.make_moves_sequence(
-                        self.rubiks_cube,
-                        [
-                            [[["U'"], ["U"]], [["E"], ["E'"]], [["D"], ["D'"]]][
-                                int(self.mouse_move_info[1])
-                            ][index2],
-                            [[["F"], ["F'"]], [["S"], ["S'"]], [["B'"], ["B"]]][
-                                int(self.mouse_move_info[2])
-                            ][index3],
-                        ][index1],
-                        True,
-                        event,
-                    )
-                self.mouse_move_info = None
+        if self.cube_dimensions != "3d":
+            return
+        if event.type == tk.EventType.ButtonPress:
+            self.lastx2 = event.x
+            self.lasty2 = event.y
+            self.mouse_move_info = piece_info
+            return
+        if event.type != tk.EventType.ButtonRelease or self.mouse_move_info is None:
+            return
+
+        index1 = [True, False].index(abs(event.x - self.lastx2) >= abs(event.y - self.lasty2))
+        index2 = [True, False].index(event.x >= self.lastx2)
+        index3 = [True, False].index(event.y >= self.lasty2)
+        side = int(self.mouse_move_info[0])
+        row = int(self.mouse_move_info[1])
+        column = int(self.mouse_move_info[2])
+        move = None
+        if self.cube_size == 2:
+            if side == 5:
+                rows = [[["U'"], ["U"]], [["D"], ["D'"]]]
+                columns = [[["L"], ["L'"]], [["R'"], ["R"]]]
+                move = [rows[row][index2], columns[column][index3]][index1]
+            elif side == 3:
+                rows = [[["B'"], ["B"]], [["F"], ["F'"]]]
+                columns = [[["L"], ["L'"]], [["R'"], ["R"]]]
+                move = [rows[row][index2], columns[column][index3]][index1]
+            elif side == 4:
+                rows = [[["U'"], ["U"]], [["D"], ["D'"]]]
+                columns = [[["F"], ["F'"]], [["B'"], ["B"]]]
+                move = [rows[row][index2], columns[column][index3]][index1]
+        else:
+            if side == 5:
+                rows = [[["U'"], ["U"]], [["E"], ["E'"]], [["D"], ["D'"]]]
+                columns = [[["L"], ["L'"]], [["M"], ["M'"]], [["R'"], ["R"]]]
+                move = [rows[row][index2], columns[column][index3]][index1]
+            elif side == 3:
+                rows = [[["B'"], ["B"]], [["S"], ["S'"]], [["F"], ["F'"]]]
+                columns = [[["L"], ["L'"]], [["M"], ["M'"]], [["R'"], ["R"]]]
+                move = [rows[row][index2], columns[column][index3]][index1]
+            elif side == 4:
+                rows = [[["U'"], ["U"]], [["E"], ["E'"]], [["D"], ["D'"]]]
+                columns = [[["F"], ["F'"]], [["S"], ["S'"]], [["B'"], ["B"]]]
+                move = [rows[row][index2], columns[column][index3]][index1]
+        if move is not None:
+            self.make_moves_sequence(self.rubiks_cube, move, True, event)
+        self.mouse_move_info = None
 
     def cube_rotations_mouse_events(self, event: tk.Event) -> None:
         if self.cube_dimensions == "3d":

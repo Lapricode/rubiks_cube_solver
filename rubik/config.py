@@ -24,6 +24,8 @@ FACE_SIZE = 3
 CENTER = 1
 COLOR_NAMES = ["blue", "yellow", "orange", "white", "red", "green"]
 
+CUBE_SIZES = [2, 3]
+DEFAULT_CUBE_SIZE = 3
 CUBE_DIMENSIONS = ["2d", "3d"]
 BORDERS_WIDTHS = [0, 1, 2, 3]
 SIDES_DISTORTIONS = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
