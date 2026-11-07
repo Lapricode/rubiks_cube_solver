@@ -9,14 +9,17 @@ CUBE_NOTATION_TEXT = (
     "example, R' (R prime) means R move but in the opposite direction. Finally, you may also meet the case where a letter\n"
     "is followed by the number 2, which means that you have to execute the specified move two times in a row. For\n"
     "example, the notation U2 (in this writing you can consider it as one move), is equivalent to U, U.\n"
+    "On the 4x4 cube, lowercase letters turn inner slices (r, u, f, ...) and letters followed by w turn two layers\n"
+    "(Rw, Uw, Fw, ...).\n"
     "Image source: https://jperm.net/3x3/moves ."
 )
 
 RESET_TEXT = (
     "You may press the ⓘ (it appears at the upper left corner of the window) to understand how to read the Rubik's cube\n"
     "notation and how to enter the moves into the program in order to be executed. Choose the cube size from the menu;\n"
-    "middle slice moves are only available on the 3x3 cube. You can change the observation view of the\n"
-    "cube pressing the numbers 4, 6, 8, 2 and also reset it to default (top white side, front green side, right red side) pressing 5.\n"
+    "middle slice moves are only available on the 3x3 cube, while the 4x4 cube uses lowercase inner-slice and w wide\n"
+    "moves. You can change the observation view of the cube pressing the numbers 4, 6, 8, 2 and also reset it to\n"
+    "default (top white side, front green side, right red side) pressing 5.\n"
     "Additionally, you can move the cube around inside the window and zoom-in or zoom-out using the mousewheel.\n"
     'Scramble the cube typing moves or pressing the "random scramble" button and then solve it yourself or let the computer\n'
     'solve it pressing the "solve" button. An other very important feature of the program is that you have the opportunity to\n'

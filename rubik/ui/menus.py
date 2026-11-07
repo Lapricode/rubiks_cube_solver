@@ -325,7 +325,7 @@ class MenusMixin:
         self._cancel_pending_graphics()
         self.buttons_bindings_are_activated = True
         self.cube_size = self.alternate_matrix_elements(self.cube_sizes_matrix, self.cube_size)
-        self.piece_side_length = 150 if self.cube_size == 2 else 100
+        self.piece_side_length = {2: 150, 3: 100, 4: 80}[self.cube_size]
         self.cube_size_button.configure(text=self.cube_size_label())
         self.reset_game()
 

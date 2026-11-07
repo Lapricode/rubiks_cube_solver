@@ -24,7 +24,7 @@ FACE_SIZE = 3
 CENTER = 1
 COLOR_NAMES = ["blue", "yellow", "orange", "white", "red", "green"]
 
-CUBE_SIZES = [2, 3]
+CUBE_SIZES = [2, 3, 4]
 DEFAULT_CUBE_SIZE = 3
 CUBE_DIMENSIONS = ["2d", "3d"]
 BORDERS_WIDTHS = [0, 1, 2, 3]

@@ -1,8 +1,8 @@
-"""Rubik's cube state and move operations for 2x2 and 3x3 cubes.
+"""Rubik's cube state and move operations for 2x2, 3x3 and 4x4 cubes.
 
 A cube is a list of six square faces using the :class:`~rubik.config.Face`
 order. Each face is indexed as ``[row][column]``. The cube size is inferred
-from the face dimensions, so the same model handles both 2x2 and 3x3 cubes.
+from the face dimensions, so the same model handles every supported cube.
 """
 
 from __future__ import annotations
@@ -87,81 +87,172 @@ def _rotate_face_clockwise(face: list[list[str]]) -> list[list[str]]:
     return [[face[size - 1 - j][i] for j in range(size)] for i in range(size)]
 
 
-def left(cube: Cube) -> Cube:
+def _left_layer(cube: Cube, depth: int, rotate_face: bool) -> Cube:
     size = cube_size(cube)
     last = size - 1
+    column = depth
+    down_column = last - depth
     cube2 = copy_cube(cube)
     for i in range(size):
-        cube2[Face.BACK][i][0] = [cube[Face.DOWN][x][last] for x in range(last, -1, -1)][i]
-        cube2[Face.DOWN][i][last] = [cube[Face.FRONT][x][0] for x in range(last, -1, -1)][i]
-        cube2[Face.UP][i][0] = [cube[Face.BACK][x][0] for x in range(size)][i]
-        cube2[Face.FRONT][i][0] = [cube[Face.UP][x][0] for x in range(size)][i]
-    cube2[Face.LEFT] = _rotate_face_clockwise(cube[Face.LEFT])
+        cube2[Face.BACK][i][column] = cube[Face.DOWN][last - i][down_column]
+        cube2[Face.DOWN][i][down_column] = cube[Face.FRONT][last - i][column]
+        cube2[Face.UP][i][column] = cube[Face.BACK][i][column]
+        cube2[Face.FRONT][i][column] = cube[Face.UP][i][column]
+    if rotate_face:
+        cube2[Face.LEFT] = _rotate_face_clockwise(cube[Face.LEFT])
+    return cube2
+
+
+def left(cube: Cube) -> Cube:
+    return _left_layer(cube, 0, True)
+
+
+def _right_layer(cube: Cube, depth: int, rotate_face: bool) -> Cube:
+    size = cube_size(cube)
+    last = size - 1
+    column = last - depth
+    down_column = depth
+    cube2 = copy_cube(cube)
+    for i in range(size):
+        cube2[Face.UP][i][column] = cube[Face.FRONT][i][column]
+        cube2[Face.FRONT][i][column] = cube[Face.DOWN][last - i][down_column]
+        cube2[Face.BACK][i][column] = cube[Face.UP][i][column]
+        cube2[Face.DOWN][i][down_column] = cube[Face.BACK][last - i][column]
+    if rotate_face:
+        cube2[Face.RIGHT] = _rotate_face_clockwise(cube[Face.RIGHT])
     return cube2
 
 
 def right(cube: Cube) -> Cube:
+    return _right_layer(cube, 0, True)
+
+
+def _up_layer(cube: Cube, depth: int, rotate_face: bool) -> Cube:
     size = cube_size(cube)
     last = size - 1
+    back_row = last - depth
+    front_row = depth
+    left_column = last - depth
+    right_column = depth
     cube2 = copy_cube(cube)
     for i in range(size):
-        cube2[Face.UP][i][last] = [cube[Face.FRONT][x][last] for x in range(size)][i]
-        cube2[Face.FRONT][i][last] = [cube[Face.DOWN][x][0] for x in range(last, -1, -1)][i]
-        cube2[Face.BACK][i][last] = [cube[Face.UP][x][last] for x in range(size)][i]
-        cube2[Face.DOWN][i][0] = [cube[Face.BACK][x][last] for x in range(last, -1, -1)][i]
-    cube2[Face.RIGHT] = _rotate_face_clockwise(cube[Face.RIGHT])
+        cube2[Face.BACK][back_row][i] = cube[Face.LEFT][last - i][left_column]
+        cube2[Face.LEFT][i][left_column] = cube[Face.FRONT][front_row][i]
+        cube2[Face.RIGHT][i][right_column] = cube[Face.BACK][back_row][i]
+        cube2[Face.FRONT][front_row][i] = cube[Face.RIGHT][last - i][right_column]
+    if rotate_face:
+        cube2[Face.UP] = _rotate_face_clockwise(cube[Face.UP])
     return cube2
 
 
 def up(cube: Cube) -> Cube:
+    return _up_layer(cube, 0, True)
+
+
+def _down_layer(cube: Cube, depth: int, rotate_face: bool) -> Cube:
     size = cube_size(cube)
     last = size - 1
+    back_row = depth
+    front_row = last - depth
+    left_column = depth
+    right_column = last - depth
     cube2 = copy_cube(cube)
     for i in range(size):
-        cube2[Face.BACK][last][i] = [cube[Face.LEFT][x][last] for x in range(last, -1, -1)][i]
-        cube2[Face.LEFT][i][last] = [cube[Face.FRONT][0][x] for x in range(size)][i]
-        cube2[Face.RIGHT][i][0] = [cube[Face.BACK][last][x] for x in range(size)][i]
-        cube2[Face.FRONT][0][i] = [cube[Face.RIGHT][x][0] for x in range(last, -1, -1)][i]
-    cube2[Face.UP] = _rotate_face_clockwise(cube[Face.UP])
+        cube2[Face.BACK][back_row][i] = cube[Face.RIGHT][i][right_column]
+        cube2[Face.LEFT][i][left_column] = cube[Face.BACK][back_row][last - i]
+        cube2[Face.RIGHT][i][right_column] = cube[Face.FRONT][front_row][last - i]
+        cube2[Face.FRONT][front_row][i] = cube[Face.LEFT][i][left_column]
+    if rotate_face:
+        cube2[Face.DOWN] = _rotate_face_clockwise(cube[Face.DOWN])
     return cube2
 
 
 def down(cube: Cube) -> Cube:
+    return _down_layer(cube, 0, True)
+
+
+def _front_layer(cube: Cube, depth: int, rotate_face: bool) -> Cube:
     size = cube_size(cube)
-    last = size - 1
+    row = size - 1 - depth
     cube2 = copy_cube(cube)
     for i in range(size):
-        cube2[Face.BACK][0][i] = [cube[Face.RIGHT][x][last] for x in range(size)][i]
-        cube2[Face.LEFT][i][0] = [cube[Face.BACK][0][x] for x in range(last, -1, -1)][i]
-        cube2[Face.RIGHT][i][last] = [cube[Face.FRONT][last][x] for x in range(last, -1, -1)][i]
-        cube2[Face.FRONT][last][i] = [cube[Face.LEFT][x][0] for x in range(size)][i]
-    cube2[Face.DOWN] = _rotate_face_clockwise(cube[Face.DOWN])
+        cube2[Face.DOWN][row][i] = cube[Face.RIGHT][row][i]
+        cube2[Face.LEFT][row][i] = cube[Face.DOWN][row][i]
+        cube2[Face.UP][row][i] = cube[Face.LEFT][row][i]
+        cube2[Face.RIGHT][row][i] = cube[Face.UP][row][i]
+    if rotate_face:
+        cube2[Face.FRONT] = _rotate_face_clockwise(cube[Face.FRONT])
     return cube2
 
 
 def front(cube: Cube) -> Cube:
+    return _front_layer(cube, 0, True)
+
+
+def _back_layer(cube: Cube, depth: int, rotate_face: bool) -> Cube:
     size = cube_size(cube)
-    last = size - 1
+    row = depth
     cube2 = copy_cube(cube)
     for i in range(size):
-        cube2[Face.DOWN][last][i] = [cube[Face.RIGHT][last][x] for x in range(size)][i]
-        cube2[Face.LEFT][last][i] = [cube[Face.DOWN][last][x] for x in range(size)][i]
-        cube2[Face.UP][last][i] = [cube[Face.LEFT][last][x] for x in range(size)][i]
-        cube2[Face.RIGHT][last][i] = [cube[Face.UP][last][x] for x in range(size)][i]
-    cube2[Face.FRONT] = _rotate_face_clockwise(cube[Face.FRONT])
+        cube2[Face.DOWN][row][i] = cube[Face.LEFT][row][i]
+        cube2[Face.LEFT][row][i] = cube[Face.UP][row][i]
+        cube2[Face.UP][row][i] = cube[Face.RIGHT][row][i]
+        cube2[Face.RIGHT][row][i] = cube[Face.DOWN][row][i]
+    if rotate_face:
+        cube2[Face.BACK] = _rotate_face_clockwise(cube[Face.BACK])
     return cube2
 
 
 def back(cube: Cube) -> Cube:
-    size = cube_size(cube)
-    cube2 = copy_cube(cube)
-    for i in range(size):
-        cube2[Face.DOWN][0][i] = [cube[Face.LEFT][0][x] for x in range(size)][i]
-        cube2[Face.LEFT][0][i] = [cube[Face.UP][0][x] for x in range(size)][i]
-        cube2[Face.UP][0][i] = [cube[Face.RIGHT][0][x] for x in range(size)][i]
-        cube2[Face.RIGHT][0][i] = [cube[Face.DOWN][0][x] for x in range(size)][i]
-    cube2[Face.BACK] = _rotate_face_clockwise(cube[Face.BACK])
-    return cube2
+    return _back_layer(cube, 0, True)
+
+
+def inner_right(cube: Cube) -> Cube:
+    return _right_layer(cube, 1, False)
+
+
+def inner_left(cube: Cube) -> Cube:
+    return _left_layer(cube, 1, False)
+
+
+def inner_up(cube: Cube) -> Cube:
+    return _up_layer(cube, 1, False)
+
+
+def inner_down(cube: Cube) -> Cube:
+    return _down_layer(cube, 1, False)
+
+
+def inner_front(cube: Cube) -> Cube:
+    return _front_layer(cube, 1, False)
+
+
+def inner_back(cube: Cube) -> Cube:
+    return _back_layer(cube, 1, False)
+
+
+def wide_right(cube: Cube) -> Cube:
+    return _right_layer(_right_layer(cube, 0, True), 1, False)
+
+
+def wide_left(cube: Cube) -> Cube:
+    return _left_layer(_left_layer(cube, 0, True), 1, False)
+
+
+def wide_up(cube: Cube) -> Cube:
+    return _up_layer(_up_layer(cube, 0, True), 1, False)
+
+
+def wide_down(cube: Cube) -> Cube:
+    return _down_layer(_down_layer(cube, 0, True), 1, False)
+
+
+def wide_front(cube: Cube) -> Cube:
+    return _front_layer(_front_layer(cube, 0, True), 1, False)
+
+
+def wide_back(cube: Cube) -> Cube:
+    return _back_layer(_back_layer(cube, 0, True), 1, False)
 
 
 def _middle_index(cube: Cube) -> int:
@@ -172,41 +263,15 @@ def _middle_index(cube: Cube) -> int:
 
 
 def midM(cube: Cube) -> Cube:
-    size = cube_size(cube)
-    last = size - 1
-    middle = _middle_index(cube)
-    cube2 = copy_cube(cube)
-    for i in range(size):
-        cube2[Face.BACK][i][middle] = [cube[Face.DOWN][x][middle] for x in range(last, -1, -1)][i]
-        cube2[Face.DOWN][i][middle] = [cube[Face.FRONT][x][middle] for x in range(last, -1, -1)][i]
-        cube2[Face.UP][i][middle] = [cube[Face.BACK][x][middle] for x in range(size)][i]
-        cube2[Face.FRONT][i][middle] = [cube[Face.UP][x][middle] for x in range(size)][i]
-    return cube2
+    return _left_layer(cube, _middle_index(cube), False)
 
 
 def midE(cube: Cube) -> Cube:
-    size = cube_size(cube)
-    last = size - 1
-    middle = _middle_index(cube)
-    cube2 = copy_cube(cube)
-    for i in range(size):
-        cube2[Face.BACK][middle][i] = [cube[Face.RIGHT][x][middle] for x in range(size)][i]
-        cube2[Face.LEFT][i][middle] = [cube[Face.BACK][middle][x] for x in range(last, -1, -1)][i]
-        cube2[Face.RIGHT][i][middle] = [cube[Face.FRONT][middle][x] for x in range(last, -1, -1)][i]
-        cube2[Face.FRONT][middle][i] = [cube[Face.LEFT][x][middle] for x in range(size)][i]
-    return cube2
+    return _down_layer(cube, _middle_index(cube), False)
 
 
 def midS(cube: Cube) -> Cube:
-    size = cube_size(cube)
-    middle = _middle_index(cube)
-    cube2 = copy_cube(cube)
-    for i in range(size):
-        cube2[Face.DOWN][middle][i] = [cube[Face.RIGHT][middle][x] for x in range(size)][i]
-        cube2[Face.LEFT][middle][i] = [cube[Face.DOWN][middle][x] for x in range(size)][i]
-        cube2[Face.UP][middle][i] = [cube[Face.LEFT][middle][x] for x in range(size)][i]
-        cube2[Face.RIGHT][middle][i] = [cube[Face.UP][middle][x] for x in range(size)][i]
-    return cube2
+    return _front_layer(cube, _middle_index(cube), False)
 
 
 def rotx(cube: Cube) -> Cube:
@@ -216,8 +281,18 @@ def rotx(cube: Cube) -> Cube:
         for _ in range(3):
             cube2 = left(cube2)
         return cube2
+    if size == 4:
+        cube2 = _right_layer(cube, 0, True)
+        cube2 = _right_layer(cube2, 1, False)
+        cube2 = _left_layer(cube2, 0, True)
+        cube2 = _left_layer(cube2, 1, False)
+        cube2 = _left_layer(cube2, 0, True)
+        cube2 = _left_layer(cube2, 1, False)
+        cube2 = _left_layer(cube2, 0, True)
+        cube2 = _left_layer(cube2, 1, False)
+        return cube2
     if size % 2 == 0:
-        raise ValueError("Whole-cube rotations support 2x2 and odd-sized cubes.")
+        raise ValueError("Whole-cube rotations support 2x2, 3x3 and 4x4 cubes.")
     cube2 = right(cube)
     for _ in range(3):
         cube2 = left(cube2)
@@ -232,8 +307,18 @@ def roty(cube: Cube) -> Cube:
         for _ in range(3):
             cube2 = down(cube2)
         return cube2
+    if size == 4:
+        cube2 = _up_layer(cube, 0, True)
+        cube2 = _up_layer(cube2, 1, False)
+        cube2 = _down_layer(cube2, 0, True)
+        cube2 = _down_layer(cube2, 1, False)
+        cube2 = _down_layer(cube2, 0, True)
+        cube2 = _down_layer(cube2, 1, False)
+        cube2 = _down_layer(cube2, 0, True)
+        cube2 = _down_layer(cube2, 1, False)
+        return cube2
     if size % 2 == 0:
-        raise ValueError("Whole-cube rotations support 2x2 and odd-sized cubes.")
+        raise ValueError("Whole-cube rotations support 2x2, 3x3 and 4x4 cubes.")
     cube2 = up(cube)
     for _ in range(3):
         cube2 = down(cube2)
@@ -248,8 +333,18 @@ def rotz(cube: Cube) -> Cube:
         for _ in range(3):
             cube2 = back(cube2)
         return cube2
+    if size == 4:
+        cube2 = _front_layer(cube, 0, True)
+        cube2 = _front_layer(cube2, 1, False)
+        cube2 = _back_layer(cube2, 0, True)
+        cube2 = _back_layer(cube2, 1, False)
+        cube2 = _back_layer(cube2, 0, True)
+        cube2 = _back_layer(cube2, 1, False)
+        cube2 = _back_layer(cube2, 0, True)
+        cube2 = _back_layer(cube2, 1, False)
+        return cube2
     if size % 2 == 0:
-        raise ValueError("Whole-cube rotations support 2x2 and odd-sized cubes.")
+        raise ValueError("Whole-cube rotations support 2x2, 3x3 and 4x4 cubes.")
     cube2 = front(cube)
     cube2 = midS(cube2)
     for _ in range(3):
@@ -264,6 +359,18 @@ MOVE_FUNCTIONS = {
     "D": down,
     "F": front,
     "B": back,
+    "l": inner_left,
+    "r": inner_right,
+    "u": inner_up,
+    "d": inner_down,
+    "f": inner_front,
+    "b": inner_back,
+    "Lw": wide_left,
+    "Rw": wide_right,
+    "Uw": wide_up,
+    "Dw": wide_down,
+    "Fw": wide_front,
+    "Bw": wide_back,
     "M": midM,
     "E": midE,
     "S": midS,
@@ -276,8 +383,14 @@ MOVE_FUNCTIONS = {
 def apply_move(cube: Cube, move: Move) -> Cube:
     if move == "":
         return cube
+    if move.endswith("'"):
+        move_name = move[:-1]
+    elif move.endswith("2"):
+        move_name = move[:-1]
+    else:
+        move_name = move
     try:
-        move_function = MOVE_FUNCTIONS[move[0]]
+        move_function = MOVE_FUNCTIONS[move_name]
     except KeyError as exc:
         raise ValueError(f"Unknown move: {move!r}") from exc
     turns = 2 if move.endswith("2") else 3 if move.endswith("'") else 1
@@ -292,38 +405,37 @@ def apply_moves(cube: Cube, moves: MoveSequence) -> Cube:
     return cube
 
 
+def _move_base(move: Move) -> Move:
+    if move.endswith("'") or move.endswith("2"):
+        return move[:-1]
+    return move
+
+
+def _move_turns(move: Move) -> int:
+    if move.endswith("'"):
+        return 3
+    if move.endswith("2"):
+        return 2
+    return 1
+
+
 def improve_moves_sequence(moves_seq: MoveSequence) -> list[str]:
-    if len(moves_seq) == 1:
-        return list(moves_seq)
+    """Cancel and combine adjacent turns of the same layer."""
     improved_moves_seq: list[str] = []
-    improvements_done = False
-    loops_counter = 0
-    while loops_counter != len(moves_seq):
-        if improved_moves_seq == []:
-            improved_moves_seq.append(moves_seq[loops_counter])
+    for move in moves_seq:
+        if not move:
+            continue
+        if improved_moves_seq and _move_base(improved_moves_seq[-1]) == _move_base(move):
+            previous = improved_moves_seq.pop()
+            turns = (_move_turns(previous) + _move_turns(move)) % 4
+            if turns == 1:
+                improved_moves_seq.append(_move_base(move))
+            elif turns == 2:
+                improved_moves_seq.append(_move_base(move) + "2")
+            elif turns == 3:
+                improved_moves_seq.append(_move_base(move) + "'")
         else:
-            moves_k0_k1 = [improved_moves_seq[-1], moves_seq[loops_counter]]
-            if moves_k0_k1[0][0] == moves_k0_k1[1][0]:
-                moves_k0_k1_lengths = [len(moves_k0_k1[0]), len(moves_k0_k1[1])]
-                improved_moves_seq.pop()
-                if moves_k0_k1_lengths.count(1) == 2:
-                    improved_moves_seq.append(moves_k0_k1[0][0] + "2")
-                elif (
-                    moves_k0_k1_lengths.count(2) == 1
-                    and moves_k0_k1[moves_k0_k1_lengths.index(2)][1] == "2"
-                ):
-                    improved_moves_seq.append(moves_k0_k1[1 - moves_k0_k1_lengths.index(2)] + "'")
-                elif moves_k0_k1_lengths.count(2) == 2:
-                    if moves_k0_k1[0][1] == "'" and moves_k0_k1[1][1] == "'":
-                        improved_moves_seq.append(moves_k0_k1[0][0] + "2")
-                    elif [moves_k0_k1[0][1], moves_k0_k1[1][1]] in [["'", "2"], ["2", "'"]]:
-                        improved_moves_seq.append(moves_k0_k1[0][0])
-                improvements_done = True
-            else:
-                improved_moves_seq.append(moves_k0_k1[1])
-        loops_counter += 1
-    if improvements_done:
-        return improve_moves_sequence(improved_moves_seq)
+            improved_moves_seq.append(move)
     return improved_moves_seq
 
 

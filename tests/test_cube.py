@@ -114,3 +114,31 @@ def test_2x2_rotations_have_order_four() -> None:
     for move in ["x", "y", "z"]:
         cube = apply_moves(solved_cube(2), [move, move, move, move])
         assert is_solved(cube), move
+
+
+def test_4x4_outer_inner_wide_moves_have_inverses() -> None:
+    moves = [
+        move for face in ["R", "L", "U", "D", "F", "B"] for move in (face, face.lower(), face + "w")
+    ]
+    for move in moves:
+        cube = apply_moves(solved_cube(4), [move, move, move, move])
+        assert is_solved(cube), move
+
+
+def test_4x4_rejects_middle_slice_moves() -> None:
+    for move in ["M", "E", "S"]:
+        with pytest.raises(ValueError, match="even-sized"):
+            apply_move(solved_cube(4), move)
+
+
+def test_4x4_rotations_have_order_four() -> None:
+    for move in ["x", "y", "z"]:
+        cube = apply_moves(solved_cube(4), [move, move, move, move])
+        assert is_solved(cube), move
+
+
+def test_improve_moves_sequence_keeps_wide_moves_separate() -> None:
+    assert improve_moves_sequence(["R", "Rw"]) == ["R", "Rw"]
+    assert improve_moves_sequence(["Rw", "Rw"]) == ["Rw2"]
+    assert improve_moves_sequence(["Rw", "Rw", "Rw", "Rw"]) == []
+    assert improve_moves_sequence(["Rw", "Rw'"]) == []

@@ -41,6 +41,7 @@ from ..cube import (
     solved_cube,
 )
 from ..solver_2x2 import solve_2x2
+from ..solver_4x4 import solve_4x4_detailed
 from ..solvers import (
     SolverFailedError,
     SolverLibraryNotInstalledError,
@@ -141,7 +142,7 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
         self.cube_sizes_matrix = CUBE_SIZES
         self.cube_dimensions = "3d"
         self.cube_dimensions_matrix = CUBE_DIMENSIONS
-        self.piece_side_length = 150 if self.cube_size == 2 else 100
+        self.piece_side_length = {2: 150, 3: 100, 4: 80}[self.cube_size]
         self.borders_width = 1
         self.borders_widths_matrix = BORDERS_WIDTHS
         self.sides_distortion = 0.6
@@ -338,30 +339,21 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
             self.moves_speed = self.scramble_moves_speed
             scramble_moves_before = len(self.random_scramble_moves_seq)
             if event is not None:
+                faces = ["L", "R", "U", "D", "F", "B"]
+                if self.cube_size == 4:
+                    move_pool = [face + suffix for face in faces for suffix in ("", "'", "2")] + [
+                        face + "w" + suffix for face in faces for suffix in ("", "'", "2")
+                    ]
+                else:
+                    move_pool = [face + suffix for face in faces for suffix in ("", "'")]
+                    if self.cube_size == 3:
+                        move_pool += ["M", "M'", "E", "E'", "S", "S'"]
                 while (
                     len(self.random_scramble_moves_seq) < self.max_scramble_moves
                     and len(self.random_scramble_moves_seq)
                     != scramble_moves_before + self.random_scramble_moves
                 ):
-                    self.random_scramble_moves_seq.append(
-                        random.choice(
-                            [
-                                "L",
-                                "L'",
-                                "R",
-                                "R'",
-                                "U",
-                                "U'",
-                                "D",
-                                "D'",
-                                "F",
-                                "F'",
-                                "B",
-                                "B'",
-                            ]
-                            + (["M", "M'", "E", "E'", "S", "S'"] if self.cube_size == 3 else [])
-                        )
-                    )
+                    self.random_scramble_moves_seq.append(random.choice(move_pool))
                     self.random_scramble_moves_seq = improve_moves_sequence(
                         self.random_scramble_moves_seq
                     )
@@ -624,6 +616,22 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
             if len(moves) // row_chars != 0:
                 line_offset += 1
 
+    def _display_stage_summary(
+        self,
+        stage_moves: Sequence[Sequence[Move]],
+        notes: Sequence[str],
+    ) -> None:
+        self.down_area_background.delete("all")
+        for index, (moves, note) in enumerate(zip(stage_moves, notes, strict=True)):
+            self.down_area_background.create_text(
+                10,
+                42 + 17 * index,
+                text=f"{note} ({len(moves)} moves)",
+                font="Arial 10 bold",
+                fill="purple",
+                anchor=tk.NW,
+            )
+
     def auto_solve_cube(
         self,
         solve_mode_stage: str,
@@ -731,6 +739,31 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
                             "2x2",
                             "<Button-1>",
                             lambda event: self.auto_solve_cube("solve_cube", "2x2", None, event),
+                        )
+                        return
+                    if self.cube_size == 4:
+                        self.down_area_background.create_text(
+                            self.down_area_background_width / 2,
+                            self.down_area_background_height / 2 - 10,
+                            text="4x4 reduction (centres, wings, parity, then 3x3)",
+                            font="Arial " + str(self.options_font) + " bold",
+                            fill="red",
+                            activefill="blue",
+                            tags="4x4",
+                        )
+                        self.down_area_background.create_text(
+                            self.down_area_background_width / 2,
+                            self.down_area_background_height / 2 + 25,
+                            text="The solution is long, so the stages are summarised below.",
+                            font="Arial " + str(self.buttons_font) + " bold",
+                            fill="brown",
+                        )
+                        self.down_area_background.tag_bind(
+                            "4x4",
+                            "<Button-1>",
+                            lambda event: self.auto_solve_cube(
+                                "solve_cube", "4x4 reduction", None, event
+                            ),
                         )
                         return
                     self.down_area_background.create_text(
@@ -841,6 +874,21 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
                             fill="darkblue",
                             width=max(100, self.down_area_background_width - 40),
                         )
+                        self.auto_solve_moves_seq = flat_moves
+                    elif self.cube_size == 4:
+                        self.down_area_background.delete("all")
+                        self.down_area_background.create_text(
+                            self.down_area_background_width / 2,
+                            self.down_area_background_height / 2,
+                            text="Solving...",
+                            font="Arial 18 bold",
+                            fill="brown",
+                        )
+                        self.root.update_idletasks()
+                        flat_moves, stage_moves, stage_notes, _solved_cube_state = (
+                            solve_4x4_detailed(self.rubiks_cube)
+                        )
+                        self._display_stage_summary(stage_moves, stage_notes)
                         self.auto_solve_moves_seq = flat_moves
                     elif solve_method_choose == "Beginner":
                         stage_moves, _solved_cube_state = solve_beginner(
@@ -1096,7 +1144,7 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
         event: tk.Event | None = None,
     ) -> Cube:
         move = moves_seq[0] if len(moves_seq) != 0 else ""
-        if self.cube_size == 2 and move and move[0] in "MES":
+        if self.cube_size % 2 == 0 and move and move[0] in "MES":
             move = ""
         if (
             (event is None) or (event is not None and self.moves_bindings_are_activated)
@@ -1283,7 +1331,7 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
                 rows = [[["U'"], ["U"]], [["D"], ["D'"]]]
                 columns = [[["F"], ["F'"]], [["B'"], ["B"]]]
                 move = [rows[row][index2], columns[column][index3]][index1]
-        else:
+        elif self.cube_size == 3:
             if side == 5:
                 rows = [[["U'"], ["U"]], [["E"], ["E'"]], [["D"], ["D'"]]]
                 columns = [[["L"], ["L'"]], [["M"], ["M'"]], [["R'"], ["R"]]]
@@ -1295,6 +1343,49 @@ class RubiksCubeApp(WidgetFactoryMixin, MenusMixin, CubeGraphicsMixin):
             elif side == 4:
                 rows = [[["U'"], ["U"]], [["E"], ["E'"]], [["D"], ["D'"]]]
                 columns = [[["F"], ["F'"]], [["S"], ["S'"]], [["B'"], ["B"]]]
+                move = [rows[row][index2], columns[column][index3]][index1]
+        else:
+            if side == 5:
+                rows = [
+                    [["U'"], ["U"]],
+                    [["u'"], ["u"]],
+                    [["d"], ["d'"]],
+                    [["D"], ["D'"]],
+                ]
+                columns = [
+                    [["L"], ["L'"]],
+                    [["l"], ["l'"]],
+                    [["r'"], ["r"]],
+                    [["R'"], ["R"]],
+                ]
+                move = [rows[row][index2], columns[column][index3]][index1]
+            elif side == 3:
+                rows = [
+                    [["B'"], ["B"]],
+                    [["b'"], ["b"]],
+                    [["f"], ["f'"]],
+                    [["F"], ["F'"]],
+                ]
+                columns = [
+                    [["L"], ["L'"]],
+                    [["l"], ["l'"]],
+                    [["r'"], ["r"]],
+                    [["R'"], ["R"]],
+                ]
+                move = [rows[row][index2], columns[column][index3]][index1]
+            elif side == 4:
+                rows = [
+                    [["U'"], ["U"]],
+                    [["u'"], ["u"]],
+                    [["d"], ["d'"]],
+                    [["D"], ["D'"]],
+                ]
+                columns = [
+                    [["F"], ["F'"]],
+                    [["f"], ["f'"]],
+                    [["b'"], ["b"]],
+                    [["B'"], ["B"]],
+                ]
                 move = [rows[row][index2], columns[column][index3]][index1]
         if move is not None:
             self.make_moves_sequence(self.rubiks_cube, move, True, event)
