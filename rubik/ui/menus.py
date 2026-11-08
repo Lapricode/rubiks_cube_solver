@@ -26,170 +26,285 @@ from ..config import (
 
 class MenusMixin:
     def create_menus(self) -> None:
-        for child in self.menu_background.winfo_children():
-            child.destroy()
+        panel = self.menu_panel
+        width, height = panel.width, panel.height
+        if width <= 1 or height <= 1:
+            return
 
-        scale = self._menu_scale()
-        pad = max(3, int(7 * scale))
-        title_font = f"Times {self.menus_font} bold"
-        option_font = f"Arial {self.options_font} bold"
-        button_font = f"Arial {self.buttons_font} bold"
+        menu_bg = self.theme["menu_bg"]
+        menu_title = self.theme["menu_title"]
+        menu_label = self.theme["menu_label"]
+        menu_text = self.theme["menu_text"]
+        button_fg = self.theme["button_fg"]
+        button_bg = self.theme["button_bg"]
+        button_hover = self.theme["button_hover"]
+        button_outline = self.theme["button_outline"]
+        panel.begin(menu_bg)
+        scale = max(0.7, min(1.35, min(width / 360.0, height / 700.0)))
+        pad = max(6, int(9 * scale))
+        title_size = max(13, int(18 * scale))
+        label_size = max(10, int(13 * scale))
+        button_size = max(9, int(12 * scale))
+        small_size = max(8, int(10 * scale))
+        row_height = max(18, int(24 * scale))
+        action_height = max(20, int(27 * scale))
+        gap = max(5, int(8 * scale))
+        footer_height = max(15, int(20 * scale))
+        footer_y = height - footer_height
+        y = pad
 
-        footer = self._menu_label(
-            self.menu_background,
-            "Created by Printzios Lampros.",
-            f"Times {max(9, self.options_font - 2)} bold",
-            "white",
-            "black",
-        )
-        footer.configure(wraplength=max(120, int(self.menu_background_width - 2 * pad)))
-        footer.pack(side=tk.BOTTOM, fill=tk.X, pady=max(2, pad // 2))
+        def draw_setting(
+            key_prefix: str, label: str, value: object, callback: Callable[[], None]
+        ) -> None:
+            nonlocal y
+            panel.text(
+                label,
+                pad,
+                y + row_height / 2,
+                size=label_size,
+                color=menu_label,
+                anchor="w",
+                max_width=max(40, width - 3 * pad - int(width * 0.28)),
+            )
+            button_width = max(52, int(width * 0.27))
+            panel.button(
+                f"setting:{key_prefix}:{label}",
+                (width - pad - button_width, y, button_width, row_height - 2),
+                str(value),
+                button_size,
+                button_fg,
+                button_bg,
+                callback,
+                hover_bg=button_hover,
+                outline=button_outline,
+            )
+            y += row_height
 
-        content = tk.Frame(self.menu_background, bg="black")
-        content.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=pad, pady=pad)
+        def draw_section(title: str, rows: list[tuple[str, object, Callable[[], None]]]) -> None:
+            nonlocal y
+            panel.text(
+                title,
+                pad,
+                y,
+                size=title_size,
+                color=menu_title,
+                bold=True,
+                serif=True,
+                max_width=width - 2 * pad,
+            )
+            y += title_size + 3
+            key_prefix = title.lower().rstrip(":").replace(" ", "_")
+            for label, value, callback in rows:
+                draw_setting(key_prefix, label, value, callback)
+            y += gap
 
-        header = tk.Frame(content, bg="black")
-        header.pack(fill=tk.X, pady=(0, pad))
-        self.reset_button = self._menu_button(
-            header, "reset", button_font, "white", "black", self.reset_game
-        )
-        self.reset_button.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, pad // 2))
-        self.show_instructions_button = self._menu_button(
-            header, "ⓘ", button_font, "white", "black", self.show_instructions
-        )
-        self.show_instructions_button.pack(side=tk.LEFT, padx=(0, pad // 2))
-        self.sound_button = self._menu_button(
-            header, "🔊", button_font, "white", "black", self.enable_disable_sound
-        )
-        self.sound_button.pack(side=tk.LEFT)
+        def draw_action(label: str, callback: Callable[[], None]) -> None:
+            nonlocal y
+            panel.button(
+                f"action:{label}",
+                (pad, y, width - 2 * pad, action_height),
+                label,
+                button_size,
+                button_fg,
+                button_bg,
+                callback,
+                hover_bg=button_hover,
+                outline=button_outline,
+            )
+            y += action_height + max(2, gap // 2)
 
-        cube_choice = self._add_menu_section(content, "Cube:", title_font, pad)
-        self.cube_size_button = self._add_menu_setting(
-            cube_choice,
-            0,
-            "size:",
-            self.cube_size_label(),
-            self.change_cube_size,
-            option_font,
-            button_font,
-            pad,
-        )
+        def separator() -> None:
+            nonlocal y
+            panel.line((pad, y), (width - pad, y), button_outline)
+            y += gap
 
-        self._add_menu_separator(content, pad)
+        header_height = max(21, int(28 * scale))
+        header_gap = max(3, pad // 2)
+        reset_width = int((width - 2 * pad - 2 * header_gap) * 0.44)
+        info_width = int((width - 2 * pad - 2 * header_gap) * 0.22)
+        sound_width = width - 2 * pad - 2 * header_gap - reset_width - info_width
+        header_y = y
+        panel.button(
+            "header:reset",
+            (pad, header_y, reset_width, header_height),
+            "reset",
+            button_size,
+            button_fg,
+            button_bg,
+            self.reset_game,
+            hover_bg=button_hover,
+            outline=button_outline,
+        )
+        panel.button(
+            "header:info",
+            (pad + reset_width + header_gap, header_y, info_width, header_height),
+            "info",
+            button_size,
+            button_fg,
+            button_bg,
+            self.show_instructions,
+            hover_bg=button_hover,
+            outline=button_outline,
+        )
+        panel.button(
+            "header:sound",
+            (
+                pad + reset_width + info_width + 2 * header_gap,
+                header_y,
+                sound_width,
+                header_height,
+            ),
+            "sound on" if self.sound_is_activated else "sound off",
+            button_size,
+            button_fg,
+            button_bg,
+            self.enable_disable_sound,
+            hover_bg=button_hover,
+            outline=button_outline,
+        )
+        y += header_height + gap
 
-        cube_graphics = self._add_menu_section(content, "Cube graphics:", title_font, pad)
-        self.borders_width_button = self._add_menu_setting(
-            cube_graphics,
-            0,
-            "borders width:",
-            self.borders_width,
-            self.change_game_settings_cube_graphics,
-            option_font,
-            button_font,
-            pad,
+        draw_section(
+            "Cube:",
+            [
+                (
+                    "size:",
+                    self.cube_size_label(),
+                    lambda: self.change_cube_size(None),
+                )
+            ],
         )
-        self.sides_distortion_button = self._add_menu_setting(
-            cube_graphics,
-            1,
-            "sides distortion:",
-            self.sides_distortion,
-            self.change_game_settings_cube_graphics,
-            option_font,
-            button_font,
-            pad,
+        separator()
+        draw_section(
+            "Cube graphics:",
+            [
+                (
+                    "borders width:",
+                    self.borders_width,
+                    lambda: self.change_game_setting("borders_width"),
+                ),
+                (
+                    "sides distortion:",
+                    self.sides_distortion,
+                    lambda: self.change_game_setting("sides_distortion"),
+                ),
+                (
+                    "hidden sides:",
+                    self.hidden_sides_visibility,
+                    lambda: self.change_game_setting("hidden_sides_visibility"),
+                ),
+                (
+                    "3d axis:",
+                    self.axis_visibility,
+                    lambda: self.change_game_setting("axis_visibility"),
+                ),
+                (
+                    "scramble pattern:",
+                    self.scramble_pattern_visibility,
+                    lambda: self.change_game_setting("scramble_pattern_visibility"),
+                ),
+                (
+                    "dimensions:",
+                    self.cube_dimensions,
+                    lambda: self.change_game_setting("cube_dimensions"),
+                ),
+            ],
         )
-        self.hidden_sides_visibility_button = self._add_menu_setting(
-            cube_graphics,
-            2,
-            "hidden sides:",
-            self.hidden_sides_visibility,
-            self.change_game_settings_cube_graphics,
-            option_font,
-            button_font,
-            pad,
+        separator()
+        draw_section(
+            "Scramble cube:",
+            [
+                (
+                    "time/move (sec):",
+                    self.scramble_moves_speed,
+                    lambda: self.change_game_setting("scramble_moves_speed"),
+                ),
+                (
+                    "moves number:",
+                    self.random_scramble_moves,
+                    lambda: self.change_game_setting("random_scramble_moves"),
+                ),
+            ],
         )
-        self.axis_visibility_button = self._add_menu_setting(
-            cube_graphics,
-            3,
-            "3d axis:",
-            self.axis_visibility,
-            self.change_game_settings_cube_graphics,
-            option_font,
-            button_font,
-            pad,
+        draw_action("random scramble", lambda: self.moves_scramble_cube(object()))
+        draw_action("draw pattern", lambda: self.draw_scramble_cube())
+        separator()
+        draw_section(
+            "Solve cube:",
+            [
+                (
+                    "time/move (sec):",
+                    self.solve_moves_speed,
+                    lambda: self.change_game_setting("solve_moves_speed"),
+                )
+            ],
         )
-        self.scramble_pattern_visibility_button = self._add_menu_setting(
-            cube_graphics,
-            4,
-            "scramble pattern:",
-            self.scramble_pattern_visibility,
-            self.change_game_settings_cube_graphics,
-            option_font,
-            button_font,
-            pad,
-        )
-        self.cube_dimensions_button = self._add_menu_setting(
-            cube_graphics,
-            5,
-            "dimensions:",
-            self.cube_dimensions,
-            self.change_game_settings_cube_graphics,
-            option_font,
-            button_font,
-            pad,
-        )
-
-        self._add_menu_separator(content, pad)
-
-        scramble_cube = self._add_menu_section(content, "Scramble cube:", title_font, pad)
-        self.scramble_moves_speed_button = self._add_menu_setting(
-            scramble_cube,
-            0,
-            "time/move (sec):",
-            self.scramble_moves_speed,
-            self.change_game_settings_cube_graphics,
-            option_font,
-            button_font,
-            pad,
-        )
-        self.moves_number_button = self._add_menu_setting(
-            scramble_cube,
-            1,
-            "moves number:",
-            self.random_scramble_moves,
-            self.change_game_settings_cube_graphics,
-            option_font,
-            button_font,
-            pad,
-        )
-        self.scramble_cube_button = self._add_menu_action(
-            scramble_cube, 2, "random scramble", self.moves_scramble_cube, button_font, pad
-        )
-        self.draw_scramble_pattern_button = self._add_menu_action(
-            scramble_cube, 3, "draw pattern", self.draw_scramble_cube, button_font, pad
-        )
-
-        self._add_menu_separator(content, pad)
-
-        solve_cube = self._add_menu_section(content, "Solve cube:", title_font, pad)
-        self.solve_moves_speed_button = self._add_menu_setting(
-            solve_cube,
-            0,
-            "time/move (sec):",
-            self.solve_moves_speed,
-            self.change_game_settings_cube_graphics,
-            option_font,
-            button_font,
-            pad,
-        )
-        self.auto_solve_cube_button = self._add_menu_action(
-            solve_cube,
-            1,
+        draw_action(
             "solve",
-            lambda event: self.auto_solve_cube("choose_method", None, None, event),
-            button_font,
-            pad,
+            lambda: self.auto_solve_cube("choose_method", None, None, None),
         )
+
+        compact_actions = [
+            ("history", self.show_history),
+            ("statistics", self.show_stats),
+            ("shortcuts", self.show_shortcuts_overlay),
+            ("save state", self.save_cube_state),
+            ("load state", self.load_cube_state),
+            ("export solution", self.export_current_solution),
+            (f"tutorial: {'on' if self.tutorial_enabled else 'off'}", self.toggle_tutorial),
+            (f"theme: {self.theme_name}", self.change_theme),
+            (
+                f"smooth turns: {'on' if self.smooth_turns_enabled else 'off'}",
+                self.toggle_smooth_turns,
+            ),
+            (f"turn speed: {self.turn_animation_duration} ms", self.cycle_turn_animation_duration),
+        ]
+        if y + 2 * (action_height + gap) < footer_y:
+            panel.text(
+                "Tools:",
+                pad,
+                y,
+                size=title_size,
+                color=menu_title,
+                bold=True,
+                serif=True,
+                max_width=width - 2 * pad,
+            )
+            y += title_size + 3
+            half_width = (width - 2 * pad - gap) / 2
+            for index, (label, callback) in enumerate(compact_actions):
+                column = index % 2
+                row = index // 2
+                panel.button(
+                    f"action:{label}",
+                    (
+                        pad + column * (half_width + gap),
+                        y + row * (action_height + gap // 2),
+                        half_width,
+                        action_height - 2,
+                    ),
+                    label,
+                    small_size,
+                    button_fg,
+                    button_bg,
+                    callback,
+                    hover_bg=button_hover,
+                    outline=button_outline,
+                )
+
+        panel.text(
+            "Created by Printzios Lampros.",
+            width / 2,
+            footer_y + footer_height / 2,
+            size=small_size,
+            color=menu_text,
+            anchor="center",
+            bold=True,
+            serif=True,
+            max_width=width - 2 * pad,
+            max_lines=1,
+        )
+        panel.finish()
 
     def _menu_scale(self) -> float:
         width = max(float(self.menu_background_width), 1.0)
@@ -203,66 +318,6 @@ class MenusMixin:
             max(9, round(DEFAULT_OPTIONS_FONT * scale)),
             max(9, round(DEFAULT_BUTTONS_FONT * scale)),
         )
-
-    def _add_menu_section(self, parent: tk.Misc, title: str, title_font: str, pad: int) -> tk.Frame:
-        section = tk.Frame(parent, bg="black")
-        section.pack(fill=tk.X, pady=(0, pad))
-
-        title_label = self._menu_label(section, title, title_font, "yellow", "black")
-        title_label.pack(anchor="w")
-
-        grid = tk.Frame(section, bg="black")
-        grid.pack(fill=tk.X, pady=(max(2, pad // 2), 0))
-        grid.grid_columnconfigure(0, weight=1)
-        grid.grid_columnconfigure(1, weight=0)
-        return grid
-
-    def _add_menu_setting(
-        self,
-        parent: tk.Frame,
-        row: int,
-        label: str,
-        value: str | int | float,
-        callback: Callable[[tk.Event], None],
-        label_font: str,
-        button_font: str,
-        pad: int,
-    ) -> tk.Label:
-        label_widget = self._menu_label(parent, label, label_font, "red", "black")
-        label_widget.grid(row=row, column=0, sticky="w", pady=max(1, pad // 2))
-
-        button = self._menu_button(parent, value, button_font, "white", "black", callback)
-        button.grid(
-            row=row,
-            column=1,
-            sticky="e",
-            padx=(pad, 0),
-            pady=max(1, pad // 2),
-        )
-        return button
-
-    def _add_menu_action(
-        self,
-        parent: tk.Frame,
-        row: int,
-        text: str,
-        callback: Callable[[tk.Event], None],
-        button_font: str,
-        pad: int,
-    ) -> tk.Label:
-        button = self._menu_button(parent, text, button_font, "white", "black", callback)
-        button.grid(
-            row=row,
-            column=0,
-            columnspan=2,
-            sticky="ew",
-            pady=(max(2, pad // 2), 0),
-        )
-        return button
-
-    def _add_menu_separator(self, parent: tk.Misc, pad: int) -> None:
-        separator = tk.Frame(parent, bg="#555555", height=1)
-        separator.pack(fill=tk.X, pady=(0, pad))
 
     def bind_events(self) -> None:
         self.cube_background.bind(
@@ -320,75 +375,64 @@ class MenusMixin:
     def cube_size_label(self) -> str:
         return f"{self.cube_size}x{self.cube_size}x{self.cube_size}"
 
-    def change_cube_size(self, event: tk.Event) -> None:
+    def change_cube_size(self, event: tk.Event | None = None) -> None:
         self.animation.cancel()
         self._cancel_pending_graphics()
         self.buttons_bindings_are_activated = True
         self.cube_size = self.alternate_matrix_elements(self.cube_sizes_matrix, self.cube_size)
         self.piece_side_length = {2: 150, 3: 100, 4: 80}[self.cube_size]
-        self.cube_size_button.configure(text=self.cube_size_label())
+        self.create_menus()
         self.reset_game()
 
-    def change_game_settings_cube_graphics(self, event: tk.Event) -> None:
-        if event.widget == self.scramble_moves_speed_button:
+    def change_game_setting(self, setting: str) -> None:
+        if setting == "scramble_moves_speed":
             self.scramble_moves_speed = self.alternate_matrix_elements(
                 MOVE_SPEEDS, self.scramble_moves_speed
             )
-            self.scramble_moves_speed_button.configure(text=self.scramble_moves_speed)
             if self.game_state == "moves_scramble":
                 self.moves_speed = self.scramble_moves_speed
-        elif event.widget == self.moves_number_button:
+        elif setting == "random_scramble_moves":
             self.random_scramble_moves = self.alternate_matrix_elements(
                 RANDOM_SCRAMBLE_MOVE_COUNTS, self.random_scramble_moves
             )
-            self.moves_number_button.configure(text=self.random_scramble_moves)
-        elif event.widget == self.scramble_pattern_visibility_button:
+        elif setting == "scramble_pattern_visibility":
             self.scramble_pattern_visibility = self.alternate_matrix_elements(
                 ["on", "off"], self.scramble_pattern_visibility
             )
-            self.scramble_pattern_visibility_button.configure(text=self.scramble_pattern_visibility)
-        elif event.widget == self.solve_moves_speed_button:
+        elif setting == "solve_moves_speed":
             self.solve_moves_speed = self.alternate_matrix_elements(
                 MOVE_SPEEDS, self.solve_moves_speed
             )
-            self.solve_moves_speed_button.configure(text=self.solve_moves_speed)
             if self.game_state == "auto_solve":
                 self.moves_speed = self.solve_moves_speed
-        elif event.widget == self.cube_dimensions_button:
+        elif setting == "cube_dimensions":
             self.cube_dimensions = self.alternate_matrix_elements(
                 CUBE_DIMENSIONS, self.cube_dimensions
             )
-            self.cube_dimensions_button.configure(text=self.cube_dimensions)
             if self.cube_dimensions == "3d":
                 self.piece_side_length = min(200, 2 * self.piece_side_length)
             elif self.cube_dimensions == "2d":
                 self.piece_side_length = max(10, 1 / 2 * self.piece_side_length)
-        elif event.widget == self.sides_distortion_button:
+        elif setting == "sides_distortion":
             self.sides_distortion = self.alternate_matrix_elements(
                 SIDES_DISTORTIONS, self.sides_distortion
             )
-            self.sides_distortion_button.configure(text=self.sides_distortion)
-        elif event.widget == self.borders_width_button:
+        elif setting == "borders_width":
             self.borders_width = self.alternate_matrix_elements(BORDERS_WIDTHS, self.borders_width)
-            self.borders_width_button.configure(text=self.borders_width)
-        elif event.widget == self.hidden_sides_visibility_button:
+        elif setting == "hidden_sides_visibility":
             self.hidden_sides_visibility = self.alternate_matrix_elements(
                 ["on", "off"], self.hidden_sides_visibility
             )
-            self.hidden_sides_visibility_button.configure(text=self.hidden_sides_visibility)
-        elif event.widget == self.axis_visibility_button:
+        elif setting == "axis_visibility":
             self.axis_visibility = self.alternate_matrix_elements(
                 ["on", "off"], self.axis_visibility
             )
-            self.axis_visibility_button.configure(text=self.axis_visibility)
+        self.create_menus()
         self.make_cube_graphics(self.rubiks_cube, None)
 
-    def enable_disable_sound(self, event: tk.Event) -> None:
-        if self.sound_is_activated:
-            self.sound_button.configure(text="🔇")
-        else:
-            self.sound_button.configure(text="🔊")
+    def enable_disable_sound(self) -> None:
         self.sound_is_activated = not self.sound_is_activated
+        self.create_menus()
 
     def show_instructions(self, event: tk.Event | None = None) -> None:
         try:

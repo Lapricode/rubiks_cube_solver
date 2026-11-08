@@ -84,3 +84,17 @@ def test_replay_reset() -> None:
     assert not replay.active
     assert replay.moves == []
     assert replay.pointer == 0
+
+
+def test_replay_seek_reconstructs_any_position() -> None:
+    initial = apply_moves(solved_cube(), ["R", "U", "F"])
+    replay = ReplayController()
+    replay.start(["F'", "U'", "R'"])
+
+    assert replay.seek(0, initial) == initial
+    assert replay.pointer == 0
+    assert is_solved(replay.seek(3, initial))
+    assert replay.pointer == 3
+    assert is_solved(replay.seek(99, initial))
+    assert replay.seek(-5, initial) == initial
+    assert replay.pointer == 0

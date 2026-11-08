@@ -47,3 +47,20 @@ REPLAY_MOVES_TEXT = (
     'You can use the buttons above\nto replay the solve moves. It also\nworks if you press "0", "1", "3"\n'
     'and "double 0" respectively.'
 )
+
+TUTORIAL_HINTS = {
+    "default": "Tip: press F1 for the shortcut overlay. Use the menu to discover actions.",
+    "reset": "Start with random scramble or draw a pattern, then replay the solution.",
+    "moves_scramble": "Type cube moves, use the mouse, or press random scramble. Undo with Ctrl+Z.",
+    "draw_scramble": "Pick a color, then click facelets to paint the pattern. Use clear/fill to start over.",
+    "self_solve": "Solve the cube yourself. The timer runs until every face is a single color.",
+    "self_solve_done": "Use the replay controls to review your solve, or try again for a better time.",
+    "choose_method": "Choose a solver. Beginner is easiest to follow; CFOP and Kociemba need extra packages.",
+    "already_solved": "The cube is already solved. Make a new scramble to continue.",
+    "choose_color": "Choose which color the beginner solver should solve first.",
+    "solving": "The solver is working. The solution will replay automatically when ready.",
+    "solve_result": "Scrub the timeline, jump between stages, or press play to replay at your chosen speed.",
+    "history": "Undo or redo moves here. History contains interactive moves from the current session.",
+    "stats": "Best and average times are stored per cube size between sessions.",
+    "error": "The cube pattern or solver reported an error. Fix the scramble and try again.",
+}

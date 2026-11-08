@@ -86,6 +86,10 @@ class ReplayController:
         self.pointer = 0
         return copy_cube(initial_cube)
 
+    def seek(self, index: int, initial_cube: Cube) -> Cube:
+        self.pointer = min(max(0, index), len(self.moves))
+        return apply_moves(copy_cube(initial_cube), self.moves[: self.pointer])
+
     def jump_to_end(self, current_cube: Cube) -> Cube:
         remaining_moves = self.moves[self.pointer :]
         self.pointer = len(self.moves)

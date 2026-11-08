@@ -6,7 +6,7 @@ import math
 import tkinter as tk
 from collections.abc import Sequence
 
-from ..config import Face
+from ..config import FACE_COLORS, Face
 from ..cube import Cube, Move, copy_cube
 
 
@@ -23,7 +23,7 @@ class CubeGraphicsMixin:
             "red",
             "cyan",
             self.cube_background_width / 2,
-            18,
+            56 if getattr(self, "tutorial_enabled", False) else 18,
             self.reset_cube_view,
         )
         self.adjust_cube_view_moves.append(move)
@@ -36,6 +36,51 @@ class CubeGraphicsMixin:
             pass
         self.adjust_cube_view_moves = []
         self.make_cube_graphics(self.rubiks_cube, None)
+
+    def _animate_turn(self, move: Move) -> None:
+        if not move or not getattr(self, "smooth_turns_enabled", False):
+            return
+        duration = max(0, int(getattr(self, "turn_animation_duration", 0)))
+        if duration <= 0:
+            return
+        if self._turn_animation_id is not None:
+            try:
+                self.root.after_cancel(self._turn_animation_id)
+            except tk.TclError:
+                pass
+            self.cube_background.move("all", *self._turn_animation_offset)
+            self._turn_animation_id = None
+        amount = 16 if "2" in move else 12
+        directions = {
+            "R": (1, 0),
+            "L": (-1, 0),
+            "U": (0, -1),
+            "D": (0, 1),
+            "F": (1, 0),
+            "B": (-1, 0),
+            "M": (-1, 0),
+            "E": (0, 1),
+            "S": (1, 0),
+            "X": (0, -1),
+            "Y": (1, 0),
+            "Z": (1, 0),
+        }
+        direction = directions.get(move[0].upper(), (1, 0))
+        sign = -1 if move.endswith("'") else 1
+        self._turn_animation_offset = (
+            direction[0] * amount * sign,
+            direction[1] * amount * sign,
+        )
+        self.cube_background.move("all", *self._turn_animation_offset)
+
+        def restore() -> None:
+            self.cube_background.move(
+                "all", -self._turn_animation_offset[0], -self._turn_animation_offset[1]
+            )
+            self._turn_animation_offset = (0, 0)
+            self._turn_animation_id = None
+
+        self._turn_animation_id = self.root.after(duration, restore)
 
     def draw_cube_side(
         self,
@@ -57,7 +102,7 @@ class CubeGraphicsMixin:
         ps2 = piece_down_side_length
         pa1 = math.radians(piece_left_side_angle)
         pa2 = math.radians(piece_down_side_angle)
-        color_names = self.cube_colors + ["cyan"]
+        color_names = self.cube_colors + [self.theme["cube_bg"]]
         cf_colors = [
             [color_names[["b", "y", "o", "w", "r", "g", "c"].index(cf[i][j])] for j in range(size)]
             for i in range(size)
@@ -133,16 +178,26 @@ class CubeGraphicsMixin:
             piece_loc_1_copy = piece_loc_1
             piece_loc_1 = self.cube_size - 1 - piece_loc_2
             piece_loc_2 = piece_loc_1_copy
-        self.rubiks_cube[piece_loc_0][piece_loc_1][piece_loc_2] = self.chosen_draw_color[0]
+        try:
+            draw_color_index = self.cube_colors.index(self.chosen_draw_color)
+        except ValueError:
+            draw_color_index = 0
+        self.rubiks_cube[piece_loc_0][piece_loc_1][piece_loc_2] = FACE_COLORS[draw_color_index]
         self.draw_scrambled_rubiks_cube = copy_cube(self.rubiks_cube)
         self.play_sound("draw_cube_sound", "sound")
         self.make_cube_graphics(self.rubiks_cube, None)
 
     def highlight_cube_piece(self, color: str) -> str:
         if self.game_state != "draw_scramble":
-            return ["#0000aa", "#cccc00", "#cd8500", "#cccccc", "#aa0000", "#00aa00", "cyan"][
-                (self.cube_colors + ["cyan"]).index(color)
-            ]
+            return [
+                "#0000aa",
+                "#cccc00",
+                "#cd8500",
+                "#cccccc",
+                "#aa0000",
+                "#00aa00",
+                self.theme["cube_bg"],
+            ][(self.cube_colors + [self.theme["cube_bg"]]).index(color)]
         return self.chosen_draw_color
 
     def make_cube_graphics(self, main_cube: Cube, move: Move | None) -> None:
@@ -607,7 +662,7 @@ class CubeGraphicsMixin:
             )
         if self.cube_is_solved(self.rubiks_cube):
             self.cube_background.create_text(
-                self.cube_background_width - 75,
+                self.cube_background_width - 100,
                 self.cube_background_height - 20,
                 text="solved",
                 font="Calibri 25 bold",
@@ -615,9 +670,11 @@ class CubeGraphicsMixin:
             )
         else:
             self.cube_background.create_text(
-                self.cube_background_width - 75,
+                self.cube_background_width - 100,
                 self.cube_background_height - 20,
                 text="scrambled",
                 font="Calibri 25 bold",
                 fill="red",
             )
+        if move is not None:
+            self._animate_turn(move)
