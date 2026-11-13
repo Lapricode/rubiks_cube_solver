@@ -24,8 +24,24 @@ FACE_SIZE = 3
 CENTER = 1
 COLOR_NAMES = ["blue", "yellow", "orange", "white", "red", "green"]
 
-CUBE_SIZES = [2, 3, 4]
+MIN_CUBE_SIZE = 2
+MAX_CUBE_SIZE = 100
+CUBE_SIZES = list(range(MIN_CUBE_SIZE, MAX_CUBE_SIZE + 1))
 DEFAULT_CUBE_SIZE = 3
+
+
+def piece_side_length_for_size(size: int) -> float:
+    return max(3.0, min(150.0, 300.0 / size))
+
+
+def piece_side_length_limits(size: int) -> tuple[float, float]:
+    return max(0.8, 80.0 / size), max(4.0, min(200.0, 600.0 / size))
+
+
+def auxiliary_piece_side_length(size: int, footprint: float = 60.0, maximum: float = 20.0) -> float:
+    return max(0.5, min(maximum, footprint / size))
+
+
 CUBE_DIMENSIONS = ["2d", "3d"]
 BORDERS_WIDTHS = [0, 1, 2, 3]
 SIDES_DISTORTIONS = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]

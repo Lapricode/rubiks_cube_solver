@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from collections.abc import Callable
+from tkinter import simpledialog
 
 from PIL import Image, ImageTk
 
@@ -14,6 +15,8 @@ from ..config import (
     DEFAULT_BUTTONS_FONT,
     DEFAULT_MENUS_FONT,
     DEFAULT_OPTIONS_FONT,
+    MAX_CUBE_SIZE,
+    MIN_CUBE_SIZE,
     MOVE_KEY_BINDINGS,
     MOVE_SPEEDS,
     NOTATION_IMAGE_PATH,
@@ -21,6 +24,8 @@ from ..config import (
     SIDES_DISTORTIONS,
     SPECIAL_MOVE_KEY_BINDINGS,
     VIEW_KEY_BINDINGS,
+    piece_side_length_for_size,
+    piece_side_length_limits,
 )
 
 
@@ -376,11 +381,21 @@ class MenusMixin:
         return f"{self.cube_size}x{self.cube_size}x{self.cube_size}"
 
     def change_cube_size(self, event: tk.Event | None = None) -> None:
+        size = simpledialog.askinteger(
+            "Cube size",
+            f"Enter a cube size from {MIN_CUBE_SIZE} to {MAX_CUBE_SIZE}:",
+            parent=self.root,
+            initialvalue=self.cube_size,
+            minvalue=MIN_CUBE_SIZE,
+            maxvalue=MAX_CUBE_SIZE,
+        )
+        if size is None or size == self.cube_size:
+            return
         self.animation.cancel()
         self._cancel_pending_graphics()
         self.buttons_bindings_are_activated = True
-        self.cube_size = self.alternate_matrix_elements(self.cube_sizes_matrix, self.cube_size)
-        self.piece_side_length = {2: 150, 3: 100, 4: 80}[self.cube_size]
+        self.cube_size = size
+        self.piece_side_length = piece_side_length_for_size(size)
         self.create_menus()
         self.reset_game()
 
@@ -409,10 +424,11 @@ class MenusMixin:
             self.cube_dimensions = self.alternate_matrix_elements(
                 CUBE_DIMENSIONS, self.cube_dimensions
             )
+            minimum, maximum = piece_side_length_limits(self.cube_size)
             if self.cube_dimensions == "3d":
-                self.piece_side_length = min(200, 2 * self.piece_side_length)
+                self.piece_side_length = min(maximum, 2 * self.piece_side_length)
             elif self.cube_dimensions == "2d":
-                self.piece_side_length = max(10, 1 / 2 * self.piece_side_length)
+                self.piece_side_length = max(minimum, 1 / 2 * self.piece_side_length)
         elif setting == "sides_distortion":
             self.sides_distortion = self.alternate_matrix_elements(
                 SIDES_DISTORTIONS, self.sides_distortion

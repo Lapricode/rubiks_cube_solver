@@ -6,7 +6,7 @@ import math
 import tkinter as tk
 from collections.abc import Sequence
 
-from ..config import FACE_COLORS, Face
+from ..config import FACE_COLORS, Face, auxiliary_piece_side_length
 from ..cube import Cube, Move, copy_cube
 
 
@@ -37,6 +37,28 @@ class CubeGraphicsMixin:
         self.adjust_cube_view_moves = []
         self.make_cube_graphics(self.rubiks_cube, None)
 
+    @staticmethod
+    def _turn_animation_direction(move: Move) -> tuple[int, int]:
+        base_move = move[:-1] if move.endswith(("'", "2")) else move
+        if base_move.endswith("w"):
+            base_move = base_move[:-1]
+        face = base_move[-1].upper() if base_move else ""
+        directions = {
+            "R": (0, -1),
+            "L": (0, 1),
+            "U": (-1, 0),
+            "D": (1, 0),
+            "F": (1, 0),
+            "B": (-1, 0),
+            "M": (0, 1),
+            "E": (1, 0),
+            "S": (1, 0),
+            "X": (0, -1),
+            "Y": (-1, 0),
+            "Z": (1, 0),
+        }
+        return directions.get(face, (1, 0))
+
     def _animate_turn(self, move: Move) -> None:
         if not move or not getattr(self, "smooth_turns_enabled", False):
             return
@@ -50,22 +72,8 @@ class CubeGraphicsMixin:
                 pass
             self.cube_background.move("all", *self._turn_animation_offset)
             self._turn_animation_id = None
-        amount = 16 if "2" in move else 12
-        directions = {
-            "R": (1, 0),
-            "L": (-1, 0),
-            "U": (0, -1),
-            "D": (0, 1),
-            "F": (1, 0),
-            "B": (-1, 0),
-            "M": (-1, 0),
-            "E": (0, 1),
-            "S": (1, 0),
-            "X": (0, -1),
-            "Y": (1, 0),
-            "Z": (1, 0),
-        }
-        direction = directions.get(move[0].upper(), (1, 0))
+        amount = 16 if move.endswith("2") else 12
+        direction = self._turn_animation_direction(move)
         sign = -1 if move.endswith("'") else 1
         self._turn_animation_offset = (
             direction[0] * amount * sign,
@@ -141,13 +149,13 @@ class CubeGraphicsMixin:
         for row in range(size):
             for column in range(size):
                 tag = f"piece_{row}_{column}_{cube_side_info}"
-                position = f"{row}{column}"
+                position = f"{row}:{column}"
                 if self.game_state == "draw_scramble":
                     background.tag_bind(
                         tag,
                         "<Button-1>",
                         lambda event, side=cube_side_info, p=position, bg=background: (
-                            self.draw_scramble_piece_pressed(bg, f"{side}{p}", event)
+                            self.draw_scramble_piece_pressed(bg, f"{side}:{p}", event)
                         ),
                     )
                 else:
@@ -155,9 +163,14 @@ class CubeGraphicsMixin:
                         tag,
                         "<Button-1>",
                         lambda event, side=cube_side_info, p=position: self.cube_moves_mouse_events(
-                            f"{side}{p}", event
+                            f"{side}:{p}", event
                         ),
                     )
+
+    @staticmethod
+    def _parse_piece_info(piece_info: str) -> tuple[int, int, int]:
+        side, row, column = piece_info.split(":")
+        return int(side), int(row), int(column)
 
     def draw_scramble_piece_pressed(
         self, background: tk.Canvas, cube_side_info: str, event: tk.Event
@@ -169,11 +182,7 @@ class CubeGraphicsMixin:
         )
         piece = event.widget.find_closest(event.x, event.y)
         background.itemconfigure(piece, fill=self.chosen_draw_color)
-        piece_loc_0, piece_loc_1, piece_loc_2 = (
-            int(cube_side_info[0]),
-            int(cube_side_info[1]),
-            int(cube_side_info[2]),
-        )
+        piece_loc_0, piece_loc_1, piece_loc_2 = self._parse_piece_info(cube_side_info)
         if piece_loc_0 == 4 and self.cube_dimensions == "3d":
             piece_loc_1_copy = piece_loc_1
             piece_loc_1 = self.cube_size - 1 - piece_loc_2
@@ -202,6 +211,8 @@ class CubeGraphicsMixin:
 
     def make_cube_graphics(self, main_cube: Cube, move: Move | None) -> None:
         n = self.cube_size
+        self.hidden_side_length = auxiliary_piece_side_length(n, 80.0, 20.0)
+        pattern_piece_length = auxiliary_piece_side_length(n, 60.0, 15.0)
         if self.game_state in ["moves_scramble", "self_solve"] or (
             self.game_state == "auto_solve"
             and self.previous_game_state in ["moves_scramble", "self_solve"]
@@ -565,19 +576,20 @@ class CubeGraphicsMixin:
             )
         if self.scramble_pattern_visibility == "on":
             gap = 2
+            piece = pattern_piece_length
             self.draw_cube_side(
                 self.cube_background,
                 False,
                 "None",
                 scrambled_rubiks_cube_view[Face.BACK],
                 1,
-                15,
-                15,
+                piece,
+                piece,
                 90,
                 0,
                 [
                     self.scrambled_pattern_centre_x,
-                    self.scrambled_pattern_centre_y - n * 15 / 2 - gap,
+                    self.scrambled_pattern_centre_y - n * piece / 2 - gap,
                 ],
             )
             self.draw_cube_side(
@@ -586,13 +598,13 @@ class CubeGraphicsMixin:
                 "None",
                 scrambled_rubiks_cube_view[Face.DOWN],
                 1,
-                15,
-                15,
+                piece,
+                piece,
                 90,
                 0,
                 [
-                    self.scrambled_pattern_centre_x - 2 * n * 15 - 2 * gap,
-                    self.scrambled_pattern_centre_y + n * 15 / 2,
+                    self.scrambled_pattern_centre_x - 2 * n * piece - 2 * gap,
+                    self.scrambled_pattern_centre_y + n * piece / 2,
                 ],
             )
             self.draw_cube_side(
@@ -601,13 +613,13 @@ class CubeGraphicsMixin:
                 "None",
                 scrambled_rubiks_cube_view[Face.LEFT],
                 1,
-                15,
-                15,
+                piece,
+                piece,
                 90,
                 0,
                 [
-                    self.scrambled_pattern_centre_x - n * 15 - gap,
-                    self.scrambled_pattern_centre_y + n * 15 / 2,
+                    self.scrambled_pattern_centre_x - n * piece - gap,
+                    self.scrambled_pattern_centre_y + n * piece / 2,
                 ],
             )
             self.draw_cube_side(
@@ -616,11 +628,11 @@ class CubeGraphicsMixin:
                 "None",
                 scrambled_rubiks_cube_view[Face.UP],
                 1,
-                15,
-                15,
+                piece,
+                piece,
                 90,
                 0,
-                [self.scrambled_pattern_centre_x, self.scrambled_pattern_centre_y + n * 15 / 2],
+                [self.scrambled_pattern_centre_x, self.scrambled_pattern_centre_y + n * piece / 2],
             )
             self.draw_cube_side(
                 self.cube_background,
@@ -628,13 +640,13 @@ class CubeGraphicsMixin:
                 "None",
                 scrambled_rubiks_cube_view[Face.RIGHT],
                 1,
-                15,
-                15,
+                piece,
+                piece,
                 90,
                 0,
                 [
-                    self.scrambled_pattern_centre_x + n * 15 + gap,
-                    self.scrambled_pattern_centre_y + n * 15 / 2,
+                    self.scrambled_pattern_centre_x + n * piece + gap,
+                    self.scrambled_pattern_centre_y + n * piece / 2,
                 ],
             )
             self.draw_cube_side(
@@ -643,13 +655,13 @@ class CubeGraphicsMixin:
                 "None",
                 scrambled_rubiks_cube_view[Face.FRONT],
                 1,
-                15,
-                15,
+                piece,
+                piece,
                 90,
                 0,
                 [
                     self.scrambled_pattern_centre_x,
-                    self.scrambled_pattern_centre_y + 3 * n * 15 / 2 + gap,
+                    self.scrambled_pattern_centre_y + 3 * n * piece / 2 + gap,
                 ],
             )
         if move is not None:

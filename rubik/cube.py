@@ -1,4 +1,4 @@
-"""Rubik's cube state and move operations for 2x2, 3x3 and 4x4 cubes.
+"""Rubik's cube state and move operations for every supported cube size.
 
 A cube is a list of six square faces using the :class:`~rubik.config.Face`
 order. Each face is indexed as ``[row][column]``. The cube size is inferred
@@ -7,6 +7,7 @@ from the face dimensions, so the same model handles every supported cube.
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 from collections.abc import Sequence
 
@@ -276,80 +277,35 @@ def midS(cube: Cube) -> Cube:
 
 def rotx(cube: Cube) -> Cube:
     size = cube_size(cube)
-    if size == 2:
-        cube2 = right(cube)
-        for _ in range(3):
-            cube2 = left(cube2)
-        return cube2
-    if size == 4:
-        cube2 = _right_layer(cube, 0, True)
-        cube2 = _right_layer(cube2, 1, False)
-        cube2 = _left_layer(cube2, 0, True)
-        cube2 = _left_layer(cube2, 1, False)
-        cube2 = _left_layer(cube2, 0, True)
-        cube2 = _left_layer(cube2, 1, False)
-        cube2 = _left_layer(cube2, 0, True)
-        cube2 = _left_layer(cube2, 1, False)
-        return cube2
-    if size % 2 == 0:
-        raise ValueError("Whole-cube rotations support 2x2, 3x3 and 4x4 cubes.")
-    cube2 = right(cube)
+    half = size // 2
+    for depth in range(half + size % 2):
+        cube = _right_layer(cube, depth, depth == 0)
     for _ in range(3):
-        cube2 = left(cube2)
-        cube2 = midM(cube2)
-    return cube2
+        for depth in range(half):
+            cube = _left_layer(cube, depth, depth == 0)
+    return cube
 
 
 def roty(cube: Cube) -> Cube:
     size = cube_size(cube)
-    if size == 2:
-        cube2 = up(cube)
-        for _ in range(3):
-            cube2 = down(cube2)
-        return cube2
-    if size == 4:
-        cube2 = _up_layer(cube, 0, True)
-        cube2 = _up_layer(cube2, 1, False)
-        cube2 = _down_layer(cube2, 0, True)
-        cube2 = _down_layer(cube2, 1, False)
-        cube2 = _down_layer(cube2, 0, True)
-        cube2 = _down_layer(cube2, 1, False)
-        cube2 = _down_layer(cube2, 0, True)
-        cube2 = _down_layer(cube2, 1, False)
-        return cube2
-    if size % 2 == 0:
-        raise ValueError("Whole-cube rotations support 2x2, 3x3 and 4x4 cubes.")
-    cube2 = up(cube)
+    half = size // 2
+    for depth in range(half + size % 2):
+        cube = _up_layer(cube, depth, depth == 0)
     for _ in range(3):
-        cube2 = down(cube2)
-        cube2 = midE(cube2)
-    return cube2
+        for depth in range(half):
+            cube = _down_layer(cube, depth, depth == 0)
+    return cube
 
 
 def rotz(cube: Cube) -> Cube:
     size = cube_size(cube)
-    if size == 2:
-        cube2 = front(cube)
-        for _ in range(3):
-            cube2 = back(cube2)
-        return cube2
-    if size == 4:
-        cube2 = _front_layer(cube, 0, True)
-        cube2 = _front_layer(cube2, 1, False)
-        cube2 = _back_layer(cube2, 0, True)
-        cube2 = _back_layer(cube2, 1, False)
-        cube2 = _back_layer(cube2, 0, True)
-        cube2 = _back_layer(cube2, 1, False)
-        cube2 = _back_layer(cube2, 0, True)
-        cube2 = _back_layer(cube2, 1, False)
-        return cube2
-    if size % 2 == 0:
-        raise ValueError("Whole-cube rotations support 2x2, 3x3 and 4x4 cubes.")
-    cube2 = front(cube)
-    cube2 = midS(cube2)
+    half = size // 2
+    for depth in range(half + size % 2):
+        cube = _front_layer(cube, depth, depth == 0)
     for _ in range(3):
-        cube2 = back(cube2)
-    return cube2
+        for depth in range(half):
+            cube = _back_layer(cube, depth, depth == 0)
+    return cube
 
 
 MOVE_FUNCTIONS = {
@@ -380,6 +336,40 @@ MOVE_FUNCTIONS = {
 }
 
 
+_LAYER_MOVE_PATTERN = re.compile(r"^(\d+)([RLUDFB])(w?)$")
+
+
+def _face_layer(cube: Cube, face_name: str, depth: int) -> Cube:
+    rotate_face = depth == 0
+    if face_name == "R":
+        return _right_layer(cube, depth, rotate_face)
+    if face_name == "L":
+        return _left_layer(cube, depth, rotate_face)
+    if face_name == "U":
+        return _up_layer(cube, depth, rotate_face)
+    if face_name == "D":
+        return _down_layer(cube, depth, rotate_face)
+    if face_name == "F":
+        return _front_layer(cube, depth, rotate_face)
+    return _back_layer(cube, depth, rotate_face)
+
+
+def _apply_numbered_layer_move(cube: Cube, move_name: Move) -> Cube:
+    match = _LAYER_MOVE_PATTERN.fullmatch(move_name)
+    if match is None:
+        raise ValueError(f"Unknown move: {move_name!r}")
+    count = int(match.group(1))
+    face_name = match.group(2)
+    wide = bool(match.group(3))
+    size = cube_size(cube)
+    if count < 1 or count > size:
+        raise ValueError(f"Layer move is outside the cube: {move_name!r}")
+    depths = range(count) if wide else (count - 1,)
+    for depth in depths:
+        cube = _face_layer(cube, face_name, depth)
+    return cube
+
+
 def apply_move(cube: Cube, move: Move) -> Cube:
     if move == "":
         return cube
@@ -389,11 +379,15 @@ def apply_move(cube: Cube, move: Move) -> Cube:
         move_name = move[:-1]
     else:
         move_name = move
-    try:
-        move_function = MOVE_FUNCTIONS[move_name]
-    except KeyError as exc:
-        raise ValueError(f"Unknown move: {move!r}") from exc
     turns = 2 if move.endswith("2") else 3 if move.endswith("'") else 1
+    move_function = MOVE_FUNCTIONS.get(move_name)
+    if move_function is None:
+        try:
+            for _ in range(turns):
+                cube = _apply_numbered_layer_move(cube, move_name)
+        except ValueError as exc:
+            raise ValueError(f"Unknown move: {move!r}") from exc
+        return cube
     for _ in range(turns):
         cube = move_function(cube)
     return cube

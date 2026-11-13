@@ -6,8 +6,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .config import CUBE_SIZES
+
 STATS_PATH = Path.home() / ".rubiks_cube_solver_stats.json"
-SUPPORTED_SIZES = (2, 3, 4)
+SUPPORTED_SIZES = tuple(CUBE_SIZES)
 MAX_HISTORY = 50
 
 

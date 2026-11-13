@@ -137,8 +137,39 @@ def test_4x4_rotations_have_order_four() -> None:
         assert is_solved(cube), move
 
 
+@pytest.mark.parametrize("size", [5, 6, 10])
+def test_large_cube_rotations_have_order_four(size: int) -> None:
+    for move in ["x", "y", "z"]:
+        cube = apply_moves(solved_cube(size), [move, move, move, move])
+        assert is_solved(cube), move
+
+
 def test_improve_moves_sequence_keeps_wide_moves_separate() -> None:
     assert improve_moves_sequence(["R", "Rw"]) == ["R", "Rw"]
     assert improve_moves_sequence(["Rw", "Rw"]) == ["Rw2"]
     assert improve_moves_sequence(["Rw", "Rw", "Rw", "Rw"]) == []
     assert improve_moves_sequence(["Rw", "Rw'"]) == []
+
+
+@pytest.mark.parametrize("size", [5, 6, 10])
+def test_numbered_layer_moves_have_inverses(size: int) -> None:
+    moves = [
+        f"{depth}{face}{suffix}"
+        for face in ["R", "L", "U", "D", "F", "B"]
+        for depth in (2, size // 2 + 1)
+        for suffix in ("", "w")
+    ]
+    for move in moves:
+        cube = apply_moves(solved_cube(size), [move, move, move, move])
+        assert is_solved(cube), move
+
+
+def test_numbered_layer_moves_match_existing_inner_and_wide_moves() -> None:
+    cube = solved_cube(5)
+    assert apply_move(cube, "2R") == apply_move(cube, "r")
+    assert apply_move(cube, "2Rw") == apply_move(cube, "Rw")
+
+
+def test_numbered_layer_move_rejects_out_of_range_layer() -> None:
+    with pytest.raises(ValueError, match="Unknown move"):
+        apply_move(solved_cube(5), "6R")
